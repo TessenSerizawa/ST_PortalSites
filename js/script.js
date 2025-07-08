@@ -332,26 +332,69 @@ function convertMarkdownToHtml(markdown) {
     // リンク
     html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
     
-    // 画像
-    html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" loading="lazy">');
+    // 画像の処理（assetsフォルダ対応）
+    html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, function(match, alt, src) {
+        // 相対パスの画像を絶対パスに変換
+        const imageSrc = convertImagePath(src);
+        return `<img src="${imageSrc}" alt="${alt}" loading="lazy">`;
+    });
     
-    // コードブロック
-    html = html.replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
+    // コードブロック（言語指定対応）
+    html = html.replace(/```(\w+)?\n([\s\S]*?)```/g, function(match, lang, code) {
+        const language = lang ? ` class="language-${lang}"` : '';
+        return `<pre><code${language}>${code.trim()}</code></pre>`;
+    });
     
     // インラインコード
     html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+    
+    // 水平線
+    html = html.replace(/^---$/gm, '<hr>');
     
     // 改行をpタグに変換
     const paragraphs = html.split('\n\n');
     html = paragraphs.map(p => {
         p = p.trim();
-        if (p && !p.startsWith('<')) {
+        if (p && !p.startsWith('<') && !p.startsWith('---')) {
             return '<p>' + p.replace(/\n/g, '<br>') + '</p>';
         }
         return p;
     }).join('\n');
     
     return html;
+}
+
+// 画像パスを適切なURLに変換
+function convertImagePath(imagePath) {
+    // 既に絶対URLの場合はそのまま返す
+    if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+        return imagePath;
+    }
+    
+    // assetsフォルダの画像への相対パス処理
+    if (imagePath.startsWith('assets/') || imagePath.startsWith('./assets/') || imagePath.startsWith('../assets/')) {
+        // パスを正規化
+        let normalizedPath = imagePath.replace(/^\.\//, '').replace(/^\.\.\//, '');
+        
+        // GitHub Pages/raw URLを構築
+        const baseUrl = `https://raw.githubusercontent.com/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/${GITHUB_CONFIG.branch}`;
+        return `${baseUrl}/${normalizedPath}`;
+    }
+    
+    // その他の相対パス（imagesフォルダなど）
+    if (!imagePath.startsWith('/')) {
+        const baseUrl = `https://raw.githubusercontent.com/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/${GITHUB_CONFIG.branch}`;
+        return `${baseUrl}/${imagePath}`;
+    }
+    
+    // 絶対パス（サイトルートから）の場合
+    if (imagePath.startsWith('/')) {
+        // GitHub PagesのベースURLを使用
+        const baseUrl = `https://${GITHUB_CONFIG.owner}.github.io/${GITHUB_CONFIG.repo}`;
+        return `${baseUrl}${imagePath}`;
+    }
+    
+    return imagePath;
 }
 
 // 記事を表示する関数
