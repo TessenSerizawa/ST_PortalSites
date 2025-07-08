@@ -10,6 +10,9 @@
     <link href="https://fonts.googleapis.com/css?family=Oswald:400,700|Ubuntu+Condensed|Noto+Sans+JP:400,700" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/gh/sygnas/font-icomoon@1.2.0/style.css" rel="stylesheet">
     
+    <!-- Google APIs -->
+    <script src="https://apis.google.com/js/api.js"></script>
+    
     <style>
         * {
             margin: 0;
@@ -31,8 +34,6 @@
             box-shadow: 0 4px 20px rgba(0,0,0,0.5);
             overflow: hidden;
         }
-
-
 
         /* ロゴ */
         .l-header__logo {
@@ -188,6 +189,12 @@
                 padding: 15px 25px;
                 font-size: 15px;
             }
+        }
+
+        /* ローディングアニメーション */
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
 
         @media (max-width: 768px) {
@@ -414,6 +421,7 @@
             overflow: hidden;
             transition: all 0.3s ease;
             border: 1px solid #e0e0e0;
+            cursor: pointer;
         }
 
         .c-entry-list__item:hover {
@@ -493,21 +501,210 @@
             font-family: 'Oswald', sans-serif;
         }
 
+        /* モーダルのスタイル */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            padding: 20px;
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-overlay.show {
+            display: flex;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal-content {
+            background: #fff;
+            border-radius: 16px;
+            max-width: 800px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: slideIn 0.3s ease;
+        }
+
+        .modal-header {
+            position: sticky;
+            top: 0;
+            background: #fff;
+            padding: 30px 30px 0;
+            border-bottom: 1px solid #eee;
+            z-index: 1;
+            border-radius: 16px 16px 0 0;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            background: #f5f5f5;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            color: #666;
+            transition: all 0.3s ease;
+            z-index: 2;
+        }
+
+        .modal-close:hover {
+            background: #e0e0e0;
+            color: #333;
+            transform: scale(1.1);
+        }
+
+        .modal-title {
+            font-family: 'Oswald', sans-serif;
+            font-size: 26px;
+            color: #333;
+            margin-bottom: 15px;
+            line-height: 1.4;
+            padding-right: 60px;
+        }
+
+        .modal-meta {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .modal-date {
+            font-size: 14px;
+            color: #666;
+            font-weight: 600;
+        }
+
+        .modal-category {
+            padding: 6px 14px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .modal-category--information {
+            background: #4CAF50;
+        }
+
+        .modal-category--update {
+            background: #2196F3;
+        }
+
+        .modal-body {
+            padding: 30px;
+            padding-top: 0;
+        }
+
+        .modal-content-text {
+            font-size: 16px;
+            line-height: 1.8;
+            color: #333;
+        }
+
+        .modal-content-text p {
+            margin-bottom: 16px;
+        }
+
+        /* 記事内画像のスタイル */
+        .modal-content-text img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            margin: 20px 0;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            display: block;
+        }
+
+        .modal-content-text .separator {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .modal-content-text .separator img {
+            margin: 20px auto;
+        }
+
+        .modal-content-text a {
+            color: #2196F3;
+            text-decoration: none;
+        }
+
+        .modal-content-text a:hover {
+            text-decoration: underline;
+        }
+
+        /* アニメーション */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-50px) scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        /* モバイル対応 */
         @media (max-width: 768px) {
-            .progress-section {
-                padding: 30px 20px;
-                margin: 0 10px 20px;
+            .modal-content {
+                margin: 10px;
+                max-height: calc(100vh - 20px);
             }
 
-            .c-tabmenu {
+            .modal-header {
+                padding: 20px 20px 0;
+            }
+
+            .modal-title {
+                font-size: 22px;
+                padding-right: 50px;
+            }
+
+            .modal-close {
+                top: 15px;
+                right: 15px;
+                width: 35px;
+                height: 35px;
+                font-size: 18px;
+            }
+
+            .modal-body {
+                padding: 20px;
+                padding-top: 0;
+            }
+
+            .modal-meta {
                 flex-direction: column;
-                align-items: center;
-                gap: 8px;
-            }
-
-            .c-tabmenu__link {
-                min-width: 120px;
-                text-align: center;
+                align-items: flex-start;
+                gap: 10px;
             }
         }
 
@@ -584,57 +781,30 @@
 
             <!-- 記事リスト -->
             <section class="c-entry-list" id="entry-list">
-                <!-- サンプル記事 -->
-                <article class="c-entry-list__item" data-category="information">
-                    <a href="#" class="c-entry-list__link">
-                        <span class="c-entry-list__meta">
-                            <span class="c-entry__date">2025.07.06</span>
-                            <span class="c-entry__category">
-                                <span class="c-entry-category__item c-entry-category__item--information">おしらせ</span>
-                            </span>
-                        </span>
-                        <h1 class="c-entry-list__title">新作3Dモデルの制作を開始しました</h1>
-                        <div class="c-entry-list__body">
-                            新しい3Dモデルの制作を開始いたします。今回はオリジナルキャラクターの制作を予定しており、完成次第BOOTHにて配布予定です。制作進捗については随時こちらのPROGRESSページにて更新していきます。
-                        </div>
-                    </a>
-                </article>
-
-                <article class="c-entry-list__item" data-category="update">
-                    <a href="#" class="c-entry-list__link">
-                        <span class="c-entry-list__meta">
-                            <span class="c-entry__date">2025.07.05</span>
-                            <span class="c-entry__category">
-                                <span class="c-entry-category__item c-entry-category__item--update">更新情報</span>
-                            </span>
-                        </span>
-                        <h1 class="c-entry-list__title">ポートフォリオサイトを更新しました</h1>
-                        <div class="c-entry-list__body">
-                            ポートフォリオサイトのデザインを一新し、新しいナビゲーションシステムを導入しました。より使いやすく、見やすいデザインになりました。今後も定期的にコンテンツを更新していく予定です。
-                        </div>
-                    </a>
-                </article>
-
-                <article class="c-entry-list__item" data-category="information">
-                    <a href="#" class="c-entry-list__link">
-                        <span class="c-entry-list__meta">
-                            <span class="c-entry__date">2025.07.03</span>
-                            <span class="c-entry__category">
-                                <span class="c-entry-category__item c-entry-category__item--information">おしらせ</span>
-                            </span>
-                        </span>
-                        <h1 class="c-entry-list__title">BOOTHショップをオープンしました</h1>
-                        <div class="c-entry-list__body">
-                            制作した3Dモデルの配布を開始いたします。BOOTHにてオリジナル3Dモデルを配布しておりますので、ぜひご覧ください。今後も新作モデルを随時追加していく予定です。
-                        </div>
-                    </a>
-                </article>
+                <!-- 読み込み中表示 -->
+                <div class="loading-state" id="loading-state">
+                    <div style="text-align: center; padding: 60px 20px; color: #666;">
+                        <div style="font-size: 18px; margin-bottom: 15px;">記事を読み込み中...</div>
+                        <div style="width: 40px; height: 40px; border: 3px solid #f3f3f3; border-top: 3px solid #333; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto;"></div>
+                    </div>
+                </div>
+                
+                <!-- 記事がここに動的に追加されます -->
             </section>
 
             <!-- 空状態（フィルタリング時に表示される可能性） -->
             <div class="empty-state" id="empty-state" style="display: none;">
                 <h3>記事が見つかりません</h3>
                 <p>選択されたカテゴリには記事がありません。</p>
+            </div>
+
+            <!-- エラー状態 -->
+            <div class="error-state" id="error-state" style="display: none;">
+                <div style="text-align: center; padding: 60px 20px; color: #e74c3c;">
+                    <h3 style="font-size: 24px; margin-bottom: 15px; font-family: 'Oswald', sans-serif;">記事の読み込みに失敗しました</h3>
+                    <p style="margin-bottom: 20px;">ネットワーク接続を確認してください。</p>
+                    <button onclick="loadBlogPosts()" style="padding: 10px 20px; background: #333; color: #fff; border: none; border-radius: 5px; cursor: pointer;">再試行</button>
+                </div>
             </div>
         </div>
     </div>
@@ -685,12 +855,330 @@
     </div>
 </main>
 
+<!-- 記事詳細モーダル -->
+<div class="modal-overlay" id="article-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <button class="modal-close" id="modal-close-btn">×</button>
+            <h1 class="modal-title" id="modal-title">記事タイトル</h1>
+            <div class="modal-meta">
+                <span class="modal-date" id="modal-date">2025.07.06</span>
+                <span class="modal-category" id="modal-category">カテゴリ</span>
+            </div>
+        </div>
+        <div class="modal-body">
+            <div class="modal-content-text" id="modal-content">
+                <p>記事の内容がここに表示されます。</p>
+            </div>
+        </div>
+    </div>
+</div>
+
 <footer class="l-footer">
     <p>©2025 Portfolio Site. All rights reserved.</p>
 </footer>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // グローバル変数
+    let allPosts = [];
+    let currentCategory = 'all';
+    
+    // Google API設定
+    const API_KEY = 'AIzaSyDummy_API_Key'; // 実際のAPIキーに置き換えてください
+    const BLOG_ID = '40298-pg71'; // BloggerのブログIDに置き換えてください
+    const CLIENT_ID = '166720594410-m80nk99ffa43hgqrdq2itg2uadtg74tm.apps.googleusercontent.com';
+    const DISCOVERY_DOC = 'https://blogger.googleapis.com/$discovery/rest?version=v3';
+    const SCOPES = 'https://www.googleapis.com/auth/blogger.readonly';
+
+    let gapi, GoogleAuth;
+
+    // モーダル要素の取得
+    const modal = document.getElementById('article-modal');
+    const modalCloseBtn = document.getElementById('modal-close-btn');
+    const modalTitle = document.getElementById('modal-title');
+    const modalDate = document.getElementById('modal-date');
+    const modalCategory = document.getElementById('modal-category');
+    const modalContent = document.getElementById('modal-content');
+
+    // Google API初期化
+    function initializeGapi() {
+        gapi.load('client:auth2', initializeGapiClient);
+    }
+
+    async function initializeGapiClient() {
+        await gapi.client.init({
+            apiKey: API_KEY,
+            clientId: CLIENT_ID,
+            discoveryDocs: [DISCOVERY_DOC],
+            scope: SCOPES
+        });
+
+        GoogleAuth = gapi.auth2.getAuthInstance();
+        console.log('Google API初期化完了');
+    }
+
+    // Blogger APIを使用して記事を取得する関数
+    async function loadBlogPosts() {
+        const loadingState = document.getElementById('loading-state');
+        const entryList = document.getElementById('entry-list');
+        const errorState = document.getElementById('error-state');
+        const emptyState = document.getElementById('empty-state');
+
+        // 状態をリセット
+        loadingState.style.display = 'block';
+        errorState.style.display = 'none';
+        emptyState.style.display = 'none';
+        entryList.innerHTML = '<div class="loading-state" id="loading-state"><div style="text-align: center; padding: 60px 20px; color: #666;"><div style="font-size: 18px; margin-bottom: 15px;">記事を読み込み中...</div><div style="width: 40px; height: 40px; border: 3px solid #f3f3f3; border-top: 3px solid #333; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto;"></div></div></div>';
+
+        try {
+            // APIキーが設定されていない場合はRSSフォールバックを使用
+            if (API_KEY === 'AIzaSyDummy_API_Key') {
+                console.log('APIキーが設定されていないため、RSSフィードを使用します');
+                await loadBlogPostsFromRSS();
+                return;
+            }
+
+            // Google APIが初期化されていない場合は初期化
+            if (!gapi || !gapi.client || !gapi.client.blogger) {
+                throw new Error('Google APIが初期化されていません');
+            }
+
+            // 認証が必要な場合は認証を実行
+            if (!GoogleAuth.isSignedIn.get()) {
+                await GoogleAuth.signIn();
+            }
+
+            // Blogger APIから記事を取得
+            const response = await gapi.client.blogger.posts.list({
+                blogId: BLOG_ID,
+                maxResults: 20,
+                orderBy: 'published',
+                status: 'live'
+            });
+
+            const posts = response.result.items || [];
+            
+            allPosts = posts.map(post => {
+                // カテゴリを判定（ラベルまたはタイトル・内容から）
+                let category = 'information'; // デフォルト
+                
+                // ラベルからカテゴリを判定
+                if (post.labels) {
+                    if (post.labels.includes('更新情報') || post.labels.includes('update')) {
+                        category = 'update';
+                    } else if (post.labels.includes('おしらせ') || post.labels.includes('information')) {
+                        category = 'information';
+                    }
+                } else {
+                    // ラベルがない場合はタイトルから判定
+                    const title = post.title.toLowerCase();
+                    if (title.includes('更新') || title.includes('アップデート') || title.includes('追加')) {
+                        category = 'update';
+                    }
+                }
+
+                // HTMLタグを除去して概要を作成
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = post.content;
+                const textContent = tempDiv.textContent || tempDiv.innerText || '';
+                
+                return {
+                    title: post.title,
+                    link: post.url,
+                    description: textContent.substring(0, 200) + (textContent.length > 200 ? '...' : ''),
+                    fullContent: post.content,
+                    pubDate: new Date(post.published),
+                    category: category,
+                    labels: post.labels || []
+                };
+            });
+
+            // 記事を日付順でソート（新しい順）
+            allPosts.sort((a, b) => b.pubDate - a.pubDate);
+
+            // 記事を表示
+            displayPosts(allPosts);
+            
+        } catch (error) {
+            console.error('Blogger API エラー:', error);
+            
+            // APIエラーの場合はRSSフォールバックを試行
+            console.log('RSSフィードにフォールバックします');
+            await loadBlogPostsFromRSS();
+        }
+    }
+
+    // RSSフィードから記事を取得する関数（フォールバック用）
+    async function loadBlogPostsFromRSS() {
+        const loadingState = document.getElementById('loading-state');
+        const errorState = document.getElementById('error-state');
+
+        try {
+            // CORS制限を回避するため、RSSプロキシサービスを使用
+            const proxyUrl = 'https://api.rss2json.com/v1/api.json?rss_url=';
+            const rssUrl = 'https://40298-pg71.blogspot.com/feeds/posts/default';
+            const response = await fetch(proxyUrl + encodeURIComponent(rssUrl));
+            
+            if (!response.ok) {
+                throw new Error('記事の取得に失敗しました');
+            }
+
+            const data = await response.json();
+            
+            if (data.status !== 'ok') {
+                throw new Error('RSSフィードの解析に失敗しました');
+            }
+
+            allPosts = data.items.map(item => {
+                // カテゴリを判定（タイトルや内容から推測）
+                let category = 'information'; // デフォルト
+                const title = item.title.toLowerCase();
+                const content = item.description.toLowerCase();
+                
+                if (title.includes('更新') || title.includes('アップデート') || title.includes('追加') || 
+                    content.includes('更新') || content.includes('アップデート')) {
+                    category = 'update';
+                }
+
+                return {
+                    title: item.title,
+                    link: item.link,
+                    description: item.description.replace(/<[^>]*>/g, '').substring(0, 200) + '...',
+                    fullContent: item.description,
+                    pubDate: new Date(item.pubDate),
+                    category: category
+                };
+            });
+
+            // 記事を日付順でソート
+            allPosts.sort((a, b) => b.pubDate - a.pubDate);
+
+            // 記事を表示
+            displayPosts(allPosts);
+            
+        } catch (error) {
+            console.error('RSSフィード読み込みエラー:', error);
+            loadingState.style.display = 'none';
+            errorState.style.display = 'block';
+        }
+    }
+
+    // 記事を表示する関数
+    function displayPosts(posts) {
+        const entryList = document.getElementById('entry-list');
+        const loadingState = document.getElementById('loading-state');
+        const emptyState = document.getElementById('empty-state');
+
+        loadingState.style.display = 'none';
+
+        if (posts.length === 0) {
+            emptyState.style.display = 'block';
+            entryList.style.display = 'none';
+            return;
+        }
+
+        emptyState.style.display = 'none';
+        entryList.style.display = 'grid';
+        entryList.innerHTML = '';
+
+        posts.forEach((post, index) => {
+            const categoryClass = post.category === 'update' ? 'update' : 'information';
+            const categoryLabel = post.category === 'update' ? '更新情報' : 'おしらせ';
+            
+            const article = document.createElement('article');
+            article.className = 'c-entry-list__item';
+            article.setAttribute('data-category', post.category);
+            article.setAttribute('data-post-index', index);
+
+            article.innerHTML = `
+                <div class="c-entry-list__link">
+                    <span class="c-entry-list__meta">
+                        <span class="c-entry__date">${formatDate(post.pubDate)}</span>
+                        <span class="c-entry__category">
+                            <span class="c-entry-category__item c-entry-category__item--${categoryClass}">${categoryLabel}</span>
+                        </span>
+                    </span>
+                    <h1 class="c-entry-list__title">${post.title}</h1>
+                    <div class="c-entry-list__body">${post.description}</div>
+                </div>
+            `;
+
+            // クリックイベントを追加
+            article.addEventListener('click', () => {
+                showModal(post);
+            });
+
+            entryList.appendChild(article);
+        });
+    }
+
+    // 日付フォーマット関数
+    function formatDate(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}.${month}.${day}`;
+    }
+
+    // モーダルを表示する関数
+    function showModal(post) {
+        modalTitle.textContent = post.title;
+        modalDate.textContent = formatDate(post.pubDate);
+        
+        // カテゴリを設定
+        const categoryClass = post.category === 'update' ? 'update' : 'information';
+        const categoryLabel = post.category === 'update' ? '更新情報' : 'おしらせ';
+        modalCategory.className = `modal-category modal-category--${categoryClass}`;
+        modalCategory.textContent = categoryLabel;
+        
+        // コンテンツを設定（HTMLをそのまま表示）
+        if (post.fullContent) {
+            // HTMLコンテンツをそのまま表示（画像なども含む）
+            modalContent.innerHTML = post.fullContent;
+        } else {
+            modalContent.innerHTML = `<p>${post.description}</p>`;
+        }
+        
+        // モーダルを表示
+        modal.classList.add('show');
+        document.body.style.overflow = 'hidden'; // 背景のスクロールを無効化
+    }
+
+    // モーダルを閉じる関数
+    function closeModal() {
+        modal.classList.remove('show');
+        document.body.style.overflow = ''; // 背景のスクロールを有効化
+    }
+
+    // モーダルイベントリスナー
+    modalCloseBtn.addEventListener('click', closeModal);
+    
+    // モーダル背景クリックで閉じる
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            closeModal();
+        }
+    });
+
+    // ESCキーでモーダルを閉じる
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && modal.classList.contains('show')) {
+            closeModal();
+        }
+    });
+
+    function filterPosts(category) {
+        currentCategory = category;
+        let filteredPosts = allPosts;
+        
+        if (category !== 'all') {
+            filteredPosts = allPosts.filter(post => post.category === category);
+        }
+        
+        displayPosts(filteredPosts);
+    }
+
     // メニューのアクティブ状態切り替え
     const menuLinks = document.querySelectorAll('.c-mainmenu__link');
     const hamburger = document.querySelector('.js-hamburger');
@@ -733,6 +1221,11 @@ document.addEventListener('DOMContentLoaded', function() {
             const targetPage = document.getElementById(targetPageId);
             if (targetPage) {
                 targetPage.classList.add('active');
+                
+                // PROGRESSページが表示された時に記事を読み込む
+                if (targetPageId === 'page-progress' && allPosts.length === 0) {
+                    loadBlogPosts();
+                }
             }
             
             // モバイルメニューを閉じる
@@ -772,8 +1265,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // PROGRESSページのカテゴリフィルタリング機能
     const categoryLinks = document.querySelectorAll('.c-tabmenu__link');
-    const entryList = document.getElementById('entry-list');
-    const emptyState = document.getElementById('empty-state');
 
     categoryLinks.forEach(link => {
         link.addEventListener('click', function(e) {
@@ -784,28 +1275,24 @@ document.addEventListener('DOMContentLoaded', function() {
             this.classList.add('active');
             
             const category = this.getAttribute('data-category');
-            const articles = entryList.querySelectorAll('.c-entry-list__item');
-            let visibleCount = 0;
-            
-            articles.forEach(article => {
-                if (category === 'all' || article.getAttribute('data-category') === category) {
-                    article.style.display = 'block';
-                    visibleCount++;
-                } else {
-                    article.style.display = 'none';
-                }
-            });
-            
-            // 空状態の表示/非表示
-            if (visibleCount === 0) {
-                entryList.style.display = 'none';
-                emptyState.style.display = 'block';
-            } else {
-                entryList.style.display = 'grid';
-                emptyState.style.display = 'none';
-            }
+            filterPosts(category);
         });
     });
+
+    // グローバル関数として定義（エラー時の再試行ボタン用）
+    window.loadBlogPosts = loadBlogPosts;
+
+    // Google API初期化を開始
+    if (typeof gapi !== 'undefined') {
+        initializeGapi();
+    } else {
+        // gapiが読み込まれていない場合は、scriptの読み込み後に初期化
+        window.onload = function() {
+            if (typeof gapi !== 'undefined') {
+                initializeGapi();
+            }
+        };
+    }
 });
 </script>
 
