@@ -11,9 +11,6 @@
     <link href="https://fonts.googleapis.com/css?family=Oswald:400,700|Ubuntu+Condensed|Noto+Sans+JP:400,700" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/gh/sygnas/font-icomoon@1.2.0/style.css" rel="stylesheet">
     
-    <!-- Google APIs -->
-    <script src="https://apis.google.com/js/api.js"></script>
-    
     <!-- CSS -->
     <link rel="stylesheet" href="css/style.css">
     
@@ -104,8 +101,9 @@
             <!-- エラー状態 -->
             <div class="error-state" id="error-state" style="display: none;">
                 <h3>記事の読み込みに失敗しました</h3>
-                <p style="margin-bottom: 20px;">ネットワーク接続を確認してください。</p>
-                <button onclick="loadBlogPosts()">再試行</button>
+                <p style="margin-bottom: 20px;">GitHubリポジトリから記事を取得できませんでした。<br>
+                設定を確認するか、しばらく時間をおいてから再試行してください。</p>
+                <button onclick="loadMarkdownPosts()">再試行</button>
             </div>
         </div>
     </div>
