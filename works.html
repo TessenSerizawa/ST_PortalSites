@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html class="no-js" lang="ja">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfolio Site - WORKS</title>
+    <meta name="description" content="Explore my portfolio of 3D models, projects, and creative works.">
+    
+    <!-- フォント -->
+    <link href="https://fonts.googleapis.com/css?family=Oswald:400,700|Ubuntu+Condensed|Noto+Sans+JP:400,700" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/gh/sygnas/font-icomoon@1.2.0/style.css" rel="stylesheet">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="css/style.css">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://yourusername.github.io/your-repository/works.html">
+    <meta property="og:title" content="Portfolio Site - WORKS">
+    <meta property="og:description" content="Explore my portfolio of 3D models, projects, and creative works.">
+    <meta property="og:image" content="https://yourusername.github.io/your-repository/images/og-image.jpg">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://yourusername.github.io/your-repository/works.html">
+    <meta property="twitter:title" content="Portfolio Site - WORKS">
+    <meta property="twitter:description" content="Explore my portfolio of 3D models, projects, and creative works.">
+    <meta property="twitter:image" content="https://yourusername.github.io/your-repository/images/og-image.jpg">
+    
+    <style>
+        /* WORKS専用のスタイル */
+        .works-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-top: 30px;
+        }
+        
+        .work-item {
+            background: #fff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .work-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+        }
+        
+        .work-image {
+            width: 100%;
+            height: 200px;
+            background: linear-gradient(135deg, #f0f0f0 0%, #e0e0e0 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #999;
+            font-size: 14px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .work-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .work-content {
+            padding: 25px;
+        }
+        
+        .work-title {
+            font-family: 'Oswald', sans-serif;
+            font-size: 20px;
+            color: #333;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+        
+        .work-description {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+        
+        .work-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .work-tag {
+            padding: 4px 12px;
+            background: #f0f0f0;
+            color: #666;
+            font-size: 12px;
+            border-radius: 12px;
+            font-weight: 600;
+        }
+        
+        .work-tag--3d {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+        
+        .work-tag--blender {
+            background: #fff3e0;
+            color: #f57c00;
+        }
+        
+        .work-tag--unity {
+            background: #e8f5e8;
+            color: #388e3c;
+        }
+        
+        .work-tag--web {
+            background: #fce4ec;
+            color: #c2185b;
+        }
+        
+        /* カテゴリフィルター */
+        .works-filter {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .filter-btn {
+            padding: 10px 20px;
+            background: #f5f5f5;
+            color: #666;
+            border: none;
+            border-radius: 25px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 14px;
+        }
+        
+        .filter-btn:hover,
+        .filter-btn.active {
+            background: #333;
+            color: #fff;
+        }
+        
+        @media (max-width: 768px) {
+            .works-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .works-filter {
+                flex-direction: column;
+                align-items: center;
+                gap: 10px;
+            }
+            
+            .filter-btn {
+                width: 200px;
+            }
+        }
+    </style>
+</head>
+<body id="page-works" class="l-body-fit">
+
+<header class="l-header l-header--works">
+    <h1 class="l-header__logo">
+        <a href="index.html">SITE LOGO</a>
+    </h1>
+
+    <nav class="c-mainmenu c-mainmenu--header c-mainmenu--works">
+        <ul style="display: contents;">
+            <li class="c-mainmenu__item c-mainmenu__item--home">
+                <a href="index.html" class="c-mainmenu__link">HOME</a>
+            </li>
+            <li class="c-mainmenu__item c-mainmenu__item--progress">
+                <a href="progress.html" class="c-mainmenu__link">PROGRESS</a>
+            </li>
+            <li class="c-mainmenu__item c-mainmenu__item--introduction">
+                <a href="introduction.html" class="c-mainmenu__link">INTRODUCTION</a>
+            </li>
+            <li class="c-mainmenu__item c-mainmenu__item--works">
+                <a href="works.html" class="c-mainmenu__link active">WORKS</a>
+            </li>
+            <li class="c-mainmenu__item c-mainmenu__item--link">
+                <a href="link.html" class="c-mainmenu__link">LINK</a>
+            </li>
+        </ul>
+    </nav>
+</header>
+
+<!--ハンバーガーメニュー-->
+<button class="p-hamburger" type="button" aria-label="メニュー">
+    <span class="p-hamburger__line"></span>
+    <span class="p-hamburger__line"></span>
+    <span class="p-hamburger__line"></span>
+</button>
+
+<main class="l-wrapper l-wrapper--works">
+    <div class="page-content">
+        <div class="link-section">
+            <h2>WORKS</h2>
+            
+            <!-- フィルターボタン -->
+            <div class="works-filter">
+                <button class="filter-btn active" data-filter="all">All</button>
+                <button class="filter-btn" data-filter="3d">3D Models</button>
+                <button class="filter-btn" data-filter="web">Web Development</button>
+                <button class="filter-btn" data-filter="game">Game Development</button>
+            </div>
+            
+            <!-- 作品グリッド -->
+            <div class="works-grid" id="works-grid">
+                <!-- 3Dモデル作品例 -->
+                <div class="work-item" data-category="3d">
+                    <div class="work-image">
+                        <span>3Dモデル画像</span>
+                    </div>
+                    <div class="work-content">
+                        <h3 class="work-title">キャラクターモデル Vol.1</h3>
+                        <p class="work-description">
+                            Blenderで制作したオリジナルキャラクターの3Dモデルです。リギング、テクスチャリングまで完了しており、VRChatやUnityで使用可能です。
+                        </p>
+                        <div class="work-tags">
+                            <span class="work-tag work-tag--3d">3D</span>
+                            <span class="work-tag work-tag--blender">Blender</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="work-item" data-category="3d">
+                    <div class="work-image">
+                        <span>3Dアイテム画像</span>
+                    </div>
+                    <div class="work-content">
+                        <h3 class="work-title">小物・アクセサリーセット</h3>
+                        <p class="work-description">
+                            ゲーム用の小物やアクセサリーのローポリモデルセットです。最適化されたメッシュとテクスチャで、モバイルゲームにも対応。
+                        </p>
+                        <div class="work-tags">
+                            <span class="work-tag work-tag--3d">3D</span>
+                            <span class="work-tag work-tag--blender">Blender</span>
+                            <span class="work-tag work-tag--unity">Unity</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- ウェブ開発作品例 -->
+                <div class="work-item" data-category="web">
+                    <div class="work-image">
+                        <span>ウェブサイト画像</span>
+                    </div>
+                    <div class="work-content">
+                        <h3 class="work-title">ポートフォリオサイト</h3>
+                        <p class="work-description">
+                            レスポンシブデザインに対応したポートフォリオサイト。モダンなUIとスムーズなアニメーションが特徴です。
+                        </p>
+                        <div class="work-tags">
+                            <span class="work-tag work-tag--web">Web</span>
+                            <span class="work-tag">HTML/CSS</span>
+                            <span class="work-tag">JavaScript</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="work-item" data-category="web">
+                    <div class="work-image">
+                        <span>ウェブアプリ画像</span>
+                    </div>
+                    <div class="work-content">
+                        <h3 class="work-title">ToDoアプリケーション</h3>
+                        <p class="work-description">
+                            シンプルで使いやすいToDoアプリケーション。ローカルストレージ対応で、ブラウザを閉じてもデータが保持されます。
+                        </p>
+                        <div class="work-tags">
+                            <span class="work-tag work-tag--web">Web</span>
+                            <span class="work-tag">JavaScript</span>
+                            <span class="work-tag">LocalStorage</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- ゲーム開発作品例 -->
+                <div class="work-item" data-category="game">
+                    <div class="work-image">
+                        <span>ゲーム画像</span>
+                    </div>
+                    <div class="work-content">
+                        <h3 class="work-title">2Dパズルゲーム</h3>
+                        <p class="work-description">
+                            Unityで制作したシンプルなパズルゲーム。直感的な操作とやりごたえのある難易度設定が特徴です。
+                        </p>
+                        <div class="work-tags">
+                            <span class="work-tag">Game</span>
+                            <span class="work-tag work-tag--unity">Unity</span>
+                            <span class="work-tag">C#</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="work-item" data-category="game">
+                    <div class="work-image">
+                        <span>VRコンテンツ画像</span>
+                    </div>
+                    <div class="work-content">
+                        <h3 class="work-title">VR体験コンテンツ</h3>
+                        <p class="work-description">
+                            VR空間での没入型体験コンテンツ。自然環境をテーマにしたリラクゼーション空間を提供します。
+                        </p>
+                        <div class="work-tags">
+                            <span class="work-tag">VR</span>
+                            <span class="work-tag work-tag--unity">Unity</span>
+                            <span class="work-tag work-tag--3d">3D</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 空状態 -->
+            <div class="empty-state" id="works-empty" style="display: none;">
+                <h3>該当する作品がありません</h3>
+                <p>選択されたカテゴリには作品がありません。</p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<footer class="l-footer">
+    <p>©2025 Portfolio Site. All rights reserved.</p>
+</footer>
+
+<script src="js/script.js"></script>
+<script>
+// WORKS専用のフィルタリング機能
+document.addEventListener('DOMContentLoaded', function() {
+    initPage('works');
+    initWorksFilter();
+});
+
+function initWorksFilter() {
+    const filterBtns = document.querySelectorAll('.filter-btn');
+    const workItems = document.querySelectorAll('.work-item');
+    const emptyState = document.getElementById('works-empty');
+    
+    filterBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            // アクティブ状態の切り替え
+            filterBtns.forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            
+            const filter = this.getAttribute('data-filter');
+            let visibleCount = 0;
+            
+            workItems.forEach(item => {
+                const category = item.getAttribute('data-category');
+                
+                if (filter === 'all' || category === filter) {
+                    item.style.display = 'block';
+                    visibleCount++;
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+            
+            // 空状態の表示/非表示
+            if (visibleCount === 0) {
+                emptyState.style.display = 'block';
+            } else {
+                emptyState.style.display = 'none';
+            }
+        });
+    });
+}
+</script>
+
+</body>
+</html>
