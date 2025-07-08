@@ -83,8 +83,8 @@ function initPage(pageName) {
 
 // プログレスページ専用の初期化
 function initProgressPage() {
-    // Blogger API関連の初期化
-    initBloggerAPI();
+    // GitHubリポジトリから記事を読み込む
+    initMarkdownLoader();
     
     // カテゴリフィルタリング機能の初期化
     initCategoryFiltering();
@@ -105,54 +105,26 @@ function initLinkPage() {
     });
 }
 
-// Blogger API関連の機能
+// GitHub設定
+const GITHUB_CONFIG = {
+    // 設定値を環境に応じて変更してください
+    owner: 'yourusername',          // GitHubのユーザー名
+    repo: 'your-repository',        // リポジトリ名
+    branch: 'main',                 // ブランチ名（mainまたはmaster）
+    postsPath: '_progress_posts'    // 記事が格納されているパス
+};
+
+// 記事データを格納する変数
 let allPosts = [];
 let currentCategory = 'all';
 
-// Google API設定
-const API_CONFIG = {
-    API_KEY: 'YOUR_API_KEY_HERE', // 実際のAPIキーに置き換えてください
-    BLOG_ID: '40298-pg71', // BloggerのブログIDに置き換えてください
-    CLIENT_ID: 'YOUR_CLIENT_ID_HERE',
-    DISCOVERY_DOC: 'https://blogger.googleapis.com/$discovery/rest?version=v3',
-    SCOPES: 'https://www.googleapis.com/auth/blogger.readonly'
-};
-
-let gapi, GoogleAuth;
-
-// Google API初期化
-function initBloggerAPI() {
-    if (typeof gapi === 'undefined') {
-        console.log('Google API not loaded, using RSS fallback');
-        loadBlogPostsFromRSS();
-        return;
-    }
-    
-    gapi.load('client:auth2', initializeGapiClient);
+// Markdownローダーの初期化
+function initMarkdownLoader() {
+    loadMarkdownPosts();
 }
 
-async function initializeGapiClient() {
-    try {
-        await gapi.client.init({
-            apiKey: API_CONFIG.API_KEY,
-            clientId: API_CONFIG.CLIENT_ID,
-            discoveryDocs: [API_CONFIG.DISCOVERY_DOC],
-            scope: API_CONFIG.SCOPES
-        });
-
-        GoogleAuth = gapi.auth2.getAuthInstance();
-        console.log('Google API初期化完了');
-        
-        // 記事の読み込み開始
-        loadBlogPosts();
-    } catch (error) {
-        console.error('Google API初期化エラー:', error);
-        loadBlogPostsFromRSS();
-    }
-}
-
-// Blogger APIを使用して記事を取得
-async function loadBlogPosts() {
+// GitHubリポジトリからMarkdownファイルを取得
+async function loadMarkdownPosts() {
     const loadingState = document.getElementById('loading-state');
     const entryList = document.getElementById('entry-list');
     const errorState = document.getElementById('error-state');
@@ -164,52 +136,43 @@ async function loadBlogPosts() {
     showLoadingState();
 
     try {
-        // APIキーが設定されていない場合はRSSフォールバックを使用
-        if (API_CONFIG.API_KEY === 'YOUR_API_KEY_HERE') {
-            console.log('APIキーが設定されていないため、RSSフィードを使用します');
-            await loadBlogPostsFromRSS();
-            return;
-        }
-
-        // Google APIが初期化されていない場合は初期化
-        if (!gapi || !gapi.client || !gapi.client.blogger) {
-            throw new Error('Google APIが初期化されていません');
-        }
-
-        // 認証が必要な場合は認証を実行
-        if (!GoogleAuth.isSignedIn.get()) {
-            await GoogleAuth.signIn();
-        }
-
-        // Blogger APIから記事を取得
-        const response = await gapi.client.blogger.posts.list({
-            blogId: API_CONFIG.BLOG_ID,
-            maxResults: 20,
-            orderBy: 'published',
-            status: 'live'
-        });
-
-        const posts = response.result.items || [];
+        // GitHub APIからファイルリストを取得
+        const apiUrl = `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.postsPath}?ref=${GITHUB_CONFIG.branch}`;
         
-        allPosts = posts.map(post => {
-            // カテゴリを判定（ラベルまたはタイトル・内容から）
-            let category = determineCategory(post);
+        console.log('Fetching posts from:', apiUrl);
+        
+        const response = await fetch(apiUrl);
+        
+        if (!response.ok) {
+            throw new Error(`GitHub API error: ${response.status} ${response.statusText}`);
+        }
 
-            // HTMLタグを除去して概要を作成
-            const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = post.content;
-            const textContent = tempDiv.textContent || tempDiv.innerText || '';
-            
-            return {
-                title: post.title,
-                link: post.url,
-                description: textContent.substring(0, 200) + (textContent.length > 200 ? '...' : ''),
-                fullContent: post.content,
-                pubDate: new Date(post.published),
-                category: category,
-                labels: post.labels || []
-            };
-        });
+        const files = await response.json();
+        
+        // .mdファイルのみをフィルタリング
+        const markdownFiles = files.filter(file => 
+            file.type === 'file' && file.name.endsWith('.md')
+        );
+
+        if (markdownFiles.length === 0) {
+            throw new Error('No markdown files found');
+        }
+
+        // 各Markdownファイルの内容を取得
+        const posts = await Promise.all(
+            markdownFiles.map(async (file) => {
+                try {
+                    const content = await fetchMarkdownContent(file.download_url);
+                    return parseMarkdownFile(file.name, content);
+                } catch (error) {
+                    console.error(`Error loading ${file.name}:`, error);
+                    return null;
+                }
+            })
+        );
+
+        // null値を除去
+        allPosts = posts.filter(post => post !== null);
 
         // 記事を日付順でソート（新しい順）
         allPosts.sort((a, b) => b.pubDate - a.pubDate);
@@ -218,85 +181,177 @@ async function loadBlogPosts() {
         displayPosts(allPosts);
         
     } catch (error) {
-        console.error('Blogger API エラー:', error);
-        
-        // APIエラーの場合はRSSフォールバックを試行
-        console.log('RSSフィードにフォールバックします');
-        await loadBlogPostsFromRSS();
-    }
-}
-
-// RSSフィードから記事を取得（フォールバック用）
-async function loadBlogPostsFromRSS() {
-    try {
-        // CORS制限を回避するため、RSSプロキシサービスを使用
-        const proxyUrl = 'https://api.rss2json.com/v1/api.json?rss_url=';
-        const rssUrl = 'https://40298-pg71.blogspot.com/feeds/posts/default';
-        const response = await fetch(proxyUrl + encodeURIComponent(rssUrl));
-        
-        if (!response.ok) {
-            throw new Error('記事の取得に失敗しました');
-        }
-
-        const data = await response.json();
-        
-        if (data.status !== 'ok') {
-            throw new Error('RSSフィードの解析に失敗しました');
-        }
-
-        allPosts = data.items.map(item => {
-            // カテゴリを判定（タイトルや内容から推測）
-            let category = 'information'; // デフォルト
-            const title = item.title.toLowerCase();
-            const content = item.description.toLowerCase();
-            
-            if (title.includes('更新') || title.includes('アップデート') || title.includes('追加') || 
-                content.includes('更新') || content.includes('アップデート')) {
-                category = 'update';
-            }
-
-            return {
-                title: item.title,
-                link: item.link,
-                description: item.description.replace(/<[^>]*>/g, '').substring(0, 200) + '...',
-                fullContent: item.description,
-                pubDate: new Date(item.pubDate),
-                category: category
-            };
-        });
-
-        // 記事を日付順でソート
-        allPosts.sort((a, b) => b.pubDate - a.pubDate);
-
-        // 記事を表示
-        displayPosts(allPosts);
-        
-    } catch (error) {
-        console.error('RSSフィード読み込みエラー:', error);
+        console.error('Error loading posts:', error);
         showErrorState();
     }
 }
 
-// カテゴリを判定する関数
-function determineCategory(post) {
-    let category = 'information'; // デフォルト
-    
-    // ラベルからカテゴリを判定
-    if (post.labels) {
-        if (post.labels.includes('更新情報') || post.labels.includes('update')) {
-            category = 'update';
-        } else if (post.labels.includes('おしらせ') || post.labels.includes('information')) {
-            category = 'information';
-        }
-    } else {
-        // ラベルがない場合はタイトルから判定
-        const title = post.title.toLowerCase();
-        if (title.includes('更新') || title.includes('アップデート') || title.includes('追加')) {
-            category = 'update';
-        }
+// Markdownファイルの内容を取得
+async function fetchMarkdownContent(downloadUrl) {
+    const response = await fetch(downloadUrl);
+    if (!response.ok) {
+        throw new Error(`Failed to fetch content: ${response.status}`);
     }
+    return await response.text();
+}
+
+// Markdownファイルを解析
+function parseMarkdownFile(filename, content) {
+    try {
+        // ファイル名から日付を抽出（年-月-日-記事の題.md）
+        const filenameParts = filename.replace('.md', '').split('-');
+        
+        if (filenameParts.length < 4) {
+            throw new Error(`Invalid filename format: ${filename}`);
+        }
+
+        const year = parseInt(filenameParts[0]);
+        const month = parseInt(filenameParts[1]);
+        const day = parseInt(filenameParts[2]);
+        const titleFromFilename = filenameParts.slice(3).join('-');
+
+        // 日付の妥当性チェック
+        if (isNaN(year) || isNaN(month) || isNaN(day) || 
+            month < 1 || month > 12 || day < 1 || day > 31) {
+            throw new Error(`Invalid date in filename: ${filename}`);
+        }
+
+        const pubDate = new Date(year, month - 1, day);
+
+        // Markdownの解析
+        const lines = content.split('\n');
+        let title = titleFromFilename;
+        let category = 'information';
+        let description = '';
+        let bodyStartIndex = 0;
+
+        // フロントマターの解析（任意）
+        if (lines[0] === '---') {
+            let frontMatterEnd = -1;
+            for (let i = 1; i < lines.length; i++) {
+                if (lines[i] === '---') {
+                    frontMatterEnd = i;
+                    break;
+                }
+            }
+
+            if (frontMatterEnd > 0) {
+                // フロントマターから情報を抽出
+                const frontMatter = lines.slice(1, frontMatterEnd);
+                frontMatter.forEach(line => {
+                    const [key, ...valueParts] = line.split(':');
+                    if (key && valueParts.length > 0) {
+                        const value = valueParts.join(':').trim();
+                        
+                        switch (key.trim()) {
+                            case 'title':
+                                title = value.replace(/^["']|["']$/g, ''); // 引用符を除去
+                                break;
+                            case 'category':
+                                category = value.replace(/^["']|["']$/g, '');
+                                break;
+                            case 'description':
+                                description = value.replace(/^["']|["']$/g, '');
+                                break;
+                        }
+                    }
+                });
+                bodyStartIndex = frontMatterEnd + 1;
+            }
+        }
+
+        // 本文の取得
+        const bodyLines = lines.slice(bodyStartIndex);
+        const fullContent = bodyLines.join('\n');
+
+        // タイトルが設定されていない場合は、最初の見出しを使用
+        if (!title || title === titleFromFilename) {
+            const firstHeading = bodyLines.find(line => line.startsWith('#'));
+            if (firstHeading) {
+                title = firstHeading.replace(/^#+\s*/, '');
+            }
+        }
+
+        // 説明文が設定されていない場合は、本文から生成
+        if (!description) {
+            const textContent = fullContent
+                .replace(/^#+\s+.*/gm, '') // 見出しを除去
+                .replace(/!\[.*?\]\(.*?\)/g, '') // 画像を除去
+                .replace(/\[.*?\]\(.*?\)/g, '') // リンクを除去
+                .replace(/[*_`]/g, '') // マークダウン記号を除去
+                .replace(/\n\s*\n/g, '\n') // 空行を除去
+                .trim();
+            
+            description = textContent.substring(0, 150) + (textContent.length > 150 ? '...' : '');
+        }
+
+        // カテゴリを判定（フロントマターで指定されていない場合）
+        if (category === 'information') {
+            const lowerTitle = title.toLowerCase();
+            const lowerContent = fullContent.toLowerCase();
+            
+            if (lowerTitle.includes('更新') || lowerTitle.includes('アップデート') || 
+                lowerTitle.includes('update') || lowerContent.includes('更新しました') ||
+                lowerContent.includes('アップデート')) {
+                category = 'update';
+            }
+        }
+
+        return {
+            title: title,
+            description: description,
+            fullContent: convertMarkdownToHtml(fullContent),
+            pubDate: pubDate,
+            category: category,
+            filename: filename
+        };
+
+    } catch (error) {
+        console.error(`Error parsing ${filename}:`, error);
+        return null;
+    }
+}
+
+// 簡単なMarkdown to HTML変換
+function convertMarkdownToHtml(markdown) {
+    let html = markdown;
     
-    return category;
+    // 見出し
+    html = html.replace(/^### (.*$)/gm, '<h3>$1</h3>');
+    html = html.replace(/^## (.*$)/gm, '<h2>$1</h2>');
+    html = html.replace(/^# (.*$)/gm, '<h1>$1</h1>');
+    
+    // 太字
+    html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    html = html.replace(/__(.*?)__/g, '<strong>$1</strong>');
+    
+    // 斜体
+    html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+    html = html.replace(/_(.*?)_/g, '<em>$1</em>');
+    
+    // リンク
+    html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+    
+    // 画像
+    html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" loading="lazy">');
+    
+    // コードブロック
+    html = html.replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
+    
+    // インラインコード
+    html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+    
+    // 改行をpタグに変換
+    const paragraphs = html.split('\n\n');
+    html = paragraphs.map(p => {
+        p = p.trim();
+        if (p && !p.startsWith('<')) {
+            return '<p>' + p.replace(/\n/g, '<br>') + '</p>';
+        }
+        return p;
+    }).join('\n');
+    
+    return html;
 }
 
 // 記事を表示する関数
@@ -472,11 +527,7 @@ function showModal(post) {
     modalCategory.textContent = categoryLabel;
     
     // コンテンツを設定（HTMLをそのまま表示）
-    if (post.fullContent) {
-        modalContent.innerHTML = post.fullContent;
-    } else {
-        modalContent.innerHTML = `<p>${post.description}</p>`;
-    }
+    modalContent.innerHTML = post.fullContent;
     
     // モーダルを表示
     modal.classList.add('show');
@@ -493,4 +544,4 @@ function closeModal() {
 }
 
 // グローバル関数として定義（エラー時の再試行ボタン用）
-window.loadBlogPosts = loadBlogPosts;
+window.loadMarkdownPosts = loadMarkdownPosts;
