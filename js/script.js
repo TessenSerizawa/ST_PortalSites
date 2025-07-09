@@ -108,7 +108,7 @@ function initLinkPage() {
 // GitHub設定 - ここを実際のリポジトリ情報に変更してください
 const GITHUB_CONFIG = {
     // 実際のGitHubユーザー名に変更してください
-    owner: 'yourusername',          // GitHubのユーザー名
+    owner: 'TessenSerizawa',          // GitHubのユーザー名
     repo: 'ST_PortalSites',         // リポジトリ名
     branch: 'main',                 // ブランチ名（mainまたはmaster）
     postsPath: '_progress_posts'    // 記事が格納されているパス
