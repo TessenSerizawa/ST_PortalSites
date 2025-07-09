@@ -105,11 +105,11 @@ function initLinkPage() {
     });
 }
 
-// GitHub設定
+// GitHub設定 - ここを実際のリポジトリ情報に変更してください
 const GITHUB_CONFIG = {
-    // 設定値を環境に応じて変更してください
+    // 実際のGitHubユーザー名に変更してください
     owner: 'yourusername',          // GitHubのユーザー名
-    repo: 'your-repository',        // リポジトリ名
+    repo: 'ST_PortalSites',         // リポジトリ名
     branch: 'main',                 // ブランチ名（mainまたはmaster）
     postsPath: '_progress_posts'    // 記事が格納されているパス
 };
@@ -120,6 +120,8 @@ let currentCategory = 'all';
 
 // Markdownローダーの初期化
 function initMarkdownLoader() {
+    // 設定確認のためのログ
+    console.log('GitHub設定:', GITHUB_CONFIG);
     loadMarkdownPosts();
 }
 
@@ -141,18 +143,31 @@ async function loadMarkdownPosts() {
         
         console.log('Fetching posts from:', apiUrl);
         
-        const response = await fetch(apiUrl);
+        // CORSの問題を回避するために、fetch時の設定を追加
+        const response = await fetch(apiUrl, {
+            headers: {
+                'Accept': 'application/vnd.github.v3+json'
+            }
+        });
         
+        console.log('Response status:', response.status);
+        console.log('Response headers:', response.headers);
+
         if (!response.ok) {
+            const errorText = await response.text();
+            console.error('API Response Error:', errorText);
             throw new Error(`GitHub API error: ${response.status} ${response.statusText}`);
         }
 
         const files = await response.json();
+        console.log('Files found:', files);
         
         // .mdファイルのみをフィルタリング
         const markdownFiles = files.filter(file => 
             file.type === 'file' && file.name.endsWith('.md')
         );
+
+        console.log('Markdown files:', markdownFiles);
 
         if (markdownFiles.length === 0) {
             throw new Error('No markdown files found');
@@ -174,6 +189,8 @@ async function loadMarkdownPosts() {
         // null値を除去
         allPosts = posts.filter(post => post !== null);
 
+        console.log('Parsed posts:', allPosts);
+
         // 記事を日付順でソート（新しい順）
         allPosts.sort((a, b) => b.pubDate - a.pubDate);
 
@@ -188,6 +205,7 @@ async function loadMarkdownPosts() {
 
 // Markdownファイルの内容を取得
 async function fetchMarkdownContent(downloadUrl) {
+    console.log('Fetching markdown content from:', downloadUrl);
     const response = await fetch(downloadUrl);
     if (!response.ok) {
         throw new Error(`Failed to fetch content: ${response.status}`);
@@ -198,6 +216,8 @@ async function fetchMarkdownContent(downloadUrl) {
 // Markdownファイルを解析
 function parseMarkdownFile(filename, content) {
     try {
+        console.log('Parsing file:', filename);
+        
         // ファイル名から日付を抽出（年-月-日-記事の題.md）
         const filenameParts = filename.replace('.md', '').split('-');
         
@@ -297,7 +317,7 @@ function parseMarkdownFile(filename, content) {
             }
         }
 
-        return {
+        const result = {
             title: title,
             description: description,
             fullContent: convertMarkdownToHtml(fullContent),
@@ -305,6 +325,9 @@ function parseMarkdownFile(filename, content) {
             category: category,
             filename: filename
         };
+
+        console.log('Parsed post:', result);
+        return result;
 
     } catch (error) {
         console.error(`Error parsing ${filename}:`, error);
