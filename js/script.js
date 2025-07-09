@@ -15,7 +15,6 @@ function initHamburgerMenu() {
 
     if (!hamburger || !mainMenu) return;
 
-    // ハンバーガーメニューのクリック処理
     hamburger.addEventListener('click', function(e) {
         e.preventDefault();
         
@@ -28,7 +27,6 @@ function initHamburgerMenu() {
         }
     });
 
-    // メニュー外クリックで閉じる
     document.addEventListener('click', function(e) {
         if (!mainMenu.contains(e.target) && !hamburger.contains(e.target)) {
             if (mainMenu.classList.contains('is-open')) {
@@ -37,7 +35,6 @@ function initHamburgerMenu() {
         }
     });
 
-    // ESCキーでメニューを閉じる
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape' && mainMenu.classList.contains('is-open')) {
             mainMenu.classList.remove('is-open');
@@ -55,12 +52,10 @@ function setActiveNavigation() {
         
         const href = link.getAttribute('href');
         
-        // ルートページ（index.html）の場合
         if ((currentPath === '/' || currentPath.endsWith('/index.html')) && 
             (href === './' || href === 'index.html' || href === '/')) {
             link.classList.add('active');
         }
-        // その他のページの場合
         else if (href && currentPath.includes(href.replace('.html', '').replace('./', ''))) {
             link.classList.add('active');
         }
@@ -83,8 +78,12 @@ function initPage(pageName) {
 
 // プログレスページ専用の初期化
 function initProgressPage() {
-    // GitHubリポジトリから記事を読み込む
-    initMarkdownLoader();
+    // 設定を確認してからMarkdownローダーを初期化
+    if (validateConfig()) {
+        initMarkdownLoader();
+    } else {
+        showConfigError();
+    }
     
     // カテゴリフィルタリング機能の初期化
     initCategoryFiltering();
@@ -95,38 +94,100 @@ function initProgressPage() {
 
 // リンクページ専用の初期化
 function initLinkPage() {
-    // 外部リンクの処理
     const externalLinks = document.querySelectorAll('a[target="_blank"]');
     externalLinks.forEach(link => {
         link.addEventListener('click', function(e) {
-            // アナリティクス追跡などを行う場合はここに追加
             console.log('External link clicked:', this.href);
         });
     });
 }
 
-// GitHub設定 - ここを実際のリポジトリ情報に変更してください
+// GitHub設定（Beautiful Jekyllテーマを参考にした設定）
 const GITHUB_CONFIG = {
-    // 実際のGitHubユーザー名に変更してください
-    owner: 'TessenSerizawa',          // GitHubのユーザー名
-    repo: 'ST_PortalSites',         // リポジトリ名
-    branch: 'main',                 // ブランチ名（mainまたはmaster）
-    postsPath: '_progress_posts'    // 記事が格納されているパス
+    // 現在のリポジトリ情報を自動取得または手動設定
+    owner: getCurrentRepoOwner() || 'TessenSerizawa',
+    repo: getCurrentRepoName() || 'ST_PortalSites',
+    branch: 'master',
+    postsPath: '_progress_posts',
+    useGitHubPages: true,
+    baseUrl: getBaseUrl()
 };
 
 // 記事データを格納する変数
 let allPosts = [];
 let currentCategory = 'all';
+let isLoading = false;
+
+// 現在のリポジトリ情報を取得
+function getCurrentRepoOwner() {
+    const hostname = window.location.hostname;
+    if (hostname.includes('github.io')) {
+        return hostname.split('.')[0];
+    }
+    return null;
+}
+
+function getCurrentRepoName() {
+    const pathname = window.location.pathname;
+    const parts = pathname.split('/').filter(p => p);
+    if (parts.length > 0 && !parts[0].endsWith('.html')) {
+        return parts[0];
+    }
+    return null;
+}
+
+function getBaseUrl() {
+    const hostname = window.location.hostname;
+    const pathname = window.location.pathname;
+    
+    if (hostname.includes('github.io')) {
+        const repoName = getCurrentRepoName();
+        return repoName ? `https://${hostname}/${repoName}` : `https://${hostname}`;
+    }
+    return window.location.origin;
+}
+
+// 設定の検証
+function validateConfig() {
+    if (!GITHUB_CONFIG.owner || GITHUB_CONFIG.owner === 'YOUR_GITHUB_USERNAME') {
+        console.error('GitHub設定が正しくありません: owner が設定されていません');
+        return false;
+    }
+    return true;
+}
+
+// 設定エラーの表示
+function showConfigError() {
+    const errorState = document.getElementById('error-state');
+    if (errorState) {
+        errorState.innerHTML = `
+            <h3>設定エラー</h3>
+            <p style="margin-bottom: 20px;">
+                GitHub設定が正しくありません。<br>
+                script.js の GITHUB_CONFIG を以下のように設定してください：
+            </p>
+            <pre style="background: #f5f5f5; padding: 15px; border-radius: 5px; text-align: left; font-size: 14px;">
+owner: '${window.location.hostname.split('.')[0] || 'あなたのGitHubユーザー名'}',
+repo: '${getCurrentRepoName() || 'あなたのリポジトリ名'}',
+branch: 'main',
+postsPath: '_progress_posts'
+            </pre>
+        `;
+        errorState.style.display = 'block';
+    }
+}
 
 // Markdownローダーの初期化
 function initMarkdownLoader() {
-    // 設定確認のためのログ
     console.log('GitHub設定:', GITHUB_CONFIG);
     loadMarkdownPosts();
 }
 
 // GitHubリポジトリからMarkdownファイルを取得
 async function loadMarkdownPosts() {
+    if (isLoading) return;
+    
+    isLoading = true;
     const loadingState = document.getElementById('loading-state');
     const entryList = document.getElementById('entry-list');
     const errorState = document.getElementById('error-state');
@@ -134,120 +195,238 @@ async function loadMarkdownPosts() {
 
     if (!loadingState || !entryList) return;
 
-    // 状態をリセット
     showLoadingState();
 
     try {
-        // GitHub APIからファイルリストを取得
-        const apiUrl = `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.postsPath}?ref=${GITHUB_CONFIG.branch}`;
+        console.log('記事を読み込み中...');
         
-        console.log('Fetching posts from:', apiUrl);
+        // 複数の方法でファイルを取得
+        let posts = [];
         
-        // CORSの問題を回避するために、fetch時の設定を追加
-        const response = await fetch(apiUrl, {
-            headers: {
-                'Accept': 'application/vnd.github.v3+json'
+        // 方法1: GitHub APIでファイルリストを取得
+        try {
+            posts = await loadFromGitHubAPI();
+            console.log('GitHub APIから記事を取得しました:', posts.length, '件');
+        } catch (apiError) {
+            console.warn('GitHub API取得に失敗:', apiError);
+            
+            // 方法2: 既知のファイルをダイレクトに取得
+            try {
+                posts = await loadKnownFiles();
+                console.log('既知のファイルから記事を取得しました:', posts.length, '件');
+            } catch (directError) {
+                console.warn('ダイレクト取得に失敗:', directError);
+                
+                // 方法3: サンプルデータを使用
+                posts = getSamplePosts();
+                console.log('サンプルデータを使用します:', posts.length, '件');
             }
-        });
-        
-        console.log('Response status:', response.status);
-        console.log('Response headers:', response.headers);
-
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error('API Response Error:', errorText);
-            throw new Error(`GitHub API error: ${response.status} ${response.statusText}`);
         }
 
-        const files = await response.json();
-        console.log('Files found:', files);
-        
-        // .mdファイルのみをフィルタリング
-        const markdownFiles = files.filter(file => 
-            file.type === 'file' && file.name.endsWith('.md')
-        );
-
-        console.log('Markdown files:', markdownFiles);
-
-        if (markdownFiles.length === 0) {
-            throw new Error('No markdown files found');
+        if (posts.length === 0) {
+            throw new Error('記事が見つかりませんでした');
         }
 
-        // 各Markdownファイルの内容を取得
-        const posts = await Promise.all(
-            markdownFiles.map(async (file) => {
-                try {
-                    const content = await fetchMarkdownContent(file.download_url);
-                    return parseMarkdownFile(file.name, content);
-                } catch (error) {
-                    console.error(`Error loading ${file.name}:`, error);
-                    return null;
-                }
-            })
-        );
-
-        // null値を除去
-        allPosts = posts.filter(post => post !== null);
-
-        console.log('Parsed posts:', allPosts);
-
-        // 記事を日付順でソート（新しい順）
-        allPosts.sort((a, b) => b.pubDate - a.pubDate);
-
+        // 記事をソート
+        allPosts = posts.sort((a, b) => b.pubDate - a.pubDate);
+        
         // 記事を表示
         displayPosts(allPosts);
         
     } catch (error) {
-        console.error('Error loading posts:', error);
-        showErrorState();
+        console.error('記事の読み込みに失敗:', error);
+        showDetailedError(error);
+    } finally {
+        isLoading = false;
     }
 }
 
-// Markdownファイルの内容を取得
-async function fetchMarkdownContent(downloadUrl) {
-    console.log('Fetching markdown content from:', downloadUrl);
-    const response = await fetch(downloadUrl);
+// GitHub APIから記事を取得
+async function loadFromGitHubAPI() {
+    const apiUrl = `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.postsPath}?ref=${GITHUB_CONFIG.branch}`;
+    
+    console.log('GitHub API URL:', apiUrl);
+    
+    const response = await fetch(apiUrl);
+    
     if (!response.ok) {
-        throw new Error(`Failed to fetch content: ${response.status}`);
+        if (response.status === 404) {
+            throw new Error(`_progress_posts フォルダが見つかりません (404)`);
+        } else if (response.status === 403) {
+            throw new Error(`GitHub API の制限に達しました (403)`);
+        } else {
+            throw new Error(`GitHub API エラー: ${response.status} ${response.statusText}`);
+        }
     }
-    return await response.text();
+
+    const files = await response.json();
+    
+    if (!Array.isArray(files)) {
+        throw new Error('ファイルリストの取得に失敗しました');
+    }
+
+    const markdownFiles = files.filter(file => 
+        file.type === 'file' && file.name.endsWith('.md')
+    );
+
+    if (markdownFiles.length === 0) {
+        throw new Error('Markdownファイルが見つかりません');
+    }
+
+    const posts = await Promise.all(
+        markdownFiles.map(async (file) => {
+            try {
+                const content = await fetchFileContent(file.download_url);
+                return parseMarkdownFile(file.name, content);
+            } catch (error) {
+                console.error(`Error loading ${file.name}:`, error);
+                return null;
+            }
+        })
+    );
+
+    return posts.filter(post => post !== null);
 }
 
-// Markdownファイルを解析
+// 既知のファイルをダイレクトに取得
+async function loadKnownFiles() {
+    const knownFiles = [
+        '2025-07-08-tesuya.md',
+        // 他に既知のファイルがあれば追加
+    ];
+
+    const posts = await Promise.all(
+        knownFiles.map(async (filename) => {
+            try {
+                const rawUrl = `https://raw.githubusercontent.com/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/${GITHUB_CONFIG.branch}/${GITHUB_CONFIG.postsPath}/${filename}`;
+                const content = await fetchFileContent(rawUrl);
+                return parseMarkdownFile(filename, content);
+            } catch (error) {
+                console.error(`Error loading ${filename}:`, error);
+                return null;
+            }
+        })
+    );
+
+    return posts.filter(post => post !== null);
+}
+
+// サンプルデータを取得
+function getSamplePosts() {
+    return [
+        {
+            title: 'サンプル記事: 新機能をリリースしました',
+            description: '今回のアップデートでは、ダークモード対応、レスポンシブデザインの改善、検索機能の追加を行いました。',
+            fullContent: `
+                <h1>新機能をリリースしました</h1>
+                <p>今回のアップデートでは、以下の機能が追加されました：</p>
+                <ul>
+                    <li><strong>ダークモード対応</strong></li>
+                    <li><strong>レスポンシブデザインの改善</strong></li>
+                    <li><strong>検索機能の追加</strong></li>
+                </ul>
+                <h2>技術的な詳細</h2>
+                <p>使用技術：</p>
+                <ul>
+                    <li>HTML5</li>
+                    <li>CSS3</li>
+                    <li>JavaScript ES6+</li>
+                </ul>
+                <p><em>※ これはサンプルデータです。実際の記事を表示するには、GitHub設定を確認してください。</em></p>
+            `,
+            pubDate: new Date(2025, 6, 8), // 2025年7月8日
+            category: 'update',
+            filename: 'sample-post.md'
+        },
+        {
+            title: 'サンプル記事: ポートフォリオサイトを公開しました',
+            description: '新しいポートフォリオサイトを公開いたしました。作品の展示やプロジェクトの進捗を共有していきます。',
+            fullContent: `
+                <h1>ポートフォリオサイトを公開しました</h1>
+                <p>新しいポートフォリオサイトを公開いたしました。</p>
+                <p>このサイトでは以下のことを行っていきます：</p>
+                <ul>
+                    <li>作品の展示</li>
+                    <li>プロジェクトの進捗共有</li>
+                    <li>技術的な学習記録</li>
+                </ul>
+                <p>今後ともよろしくお願いいたします。</p>
+                <p><em>※ これはサンプルデータです。実際の記事を表示するには、GitHub設定を確認してください。</em></p>
+            `,
+            pubDate: new Date(2025, 6, 1), // 2025年7月1日
+            category: 'information',
+            filename: 'sample-announcement.md'
+        }
+    ];
+}
+
+// ファイル内容を取得（タイムアウト対応）
+async function fetchFileContent(url) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10秒タイムアウト
+
+    try {
+        const response = await fetch(url, {
+            signal: controller.signal,
+            headers: {
+                'Accept': 'text/plain,text/markdown,*/*'
+            }
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        return await response.text();
+    } catch (error) {
+        clearTimeout(timeoutId);
+        if (error.name === 'AbortError') {
+            throw new Error('リクエストがタイムアウトしました');
+        }
+        throw error;
+    }
+}
+
+// Beautiful Jekyllスタイルのフロントマター解析
 function parseMarkdownFile(filename, content) {
     try {
-        console.log('Parsing file:', filename);
+        console.log(`Parsing file: ${filename}`);
         
-        // ファイル名から日付を抽出（年-月-日-記事の題.md）
+        // ファイル名から日付を抽出
         const filenameParts = filename.replace('.md', '').split('-');
         
-        if (filenameParts.length < 4) {
-            throw new Error(`Invalid filename format: ${filename}`);
+        let year, month, day, titleFromFilename;
+        
+        if (filenameParts.length >= 4) {
+            year = parseInt(filenameParts[0]);
+            month = parseInt(filenameParts[1]);
+            day = parseInt(filenameParts[2]);
+            titleFromFilename = filenameParts.slice(3).join('-');
+        } else {
+            // ファイル名に日付がない場合は現在の日付を使用
+            const now = new Date();
+            year = now.getFullYear();
+            month = now.getMonth() + 1;
+            day = now.getDate();
+            titleFromFilename = filename.replace('.md', '');
         }
 
-        const year = parseInt(filenameParts[0]);
-        const month = parseInt(filenameParts[1]);
-        const day = parseInt(filenameParts[2]);
-        const titleFromFilename = filenameParts.slice(3).join('-');
-
-        // 日付の妥当性チェック
-        if (isNaN(year) || isNaN(month) || isNaN(day) || 
-            month < 1 || month > 12 || day < 1 || day > 31) {
-            throw new Error(`Invalid date in filename: ${filename}`);
-        }
-
-        const pubDate = new Date(year, month - 1, day);
-
-        // Markdownの解析
-        const lines = content.split('\n');
+        // デフォルト値
         let title = titleFromFilename;
         let category = 'information';
         let description = '';
+        let tags = [];
+        let author = '';
+        let pubDate = new Date(year, month - 1, day);
+
+        // フロントマターの解析
+        const lines = content.split('\n');
+        let frontMatterEnd = -1;
         let bodyStartIndex = 0;
 
-        // フロントマターの解析（任意）
         if (lines[0] === '---') {
-            let frontMatterEnd = -1;
             for (let i = 1; i < lines.length; i++) {
                 if (lines[i] === '---') {
                     frontMatterEnd = i;
@@ -256,31 +435,55 @@ function parseMarkdownFile(filename, content) {
             }
 
             if (frontMatterEnd > 0) {
-                // フロントマターから情報を抽出
                 const frontMatter = lines.slice(1, frontMatterEnd);
+                
                 frontMatter.forEach(line => {
-                    const [key, ...valueParts] = line.split(':');
-                    if (key && valueParts.length > 0) {
-                        const value = valueParts.join(':').trim();
-                        
-                        switch (key.trim()) {
-                            case 'title':
-                                title = value.replace(/^["']|["']$/g, ''); // 引用符を除去
-                                break;
-                            case 'category':
-                                category = value.replace(/^["']|["']$/g, '');
-                                break;
-                            case 'description':
-                                description = value.replace(/^["']|["']$/g, '');
-                                break;
-                        }
+                    const colonIndex = line.indexOf(':');
+                    if (colonIndex === -1) return;
+                    
+                    const key = line.substring(0, colonIndex).trim();
+                    const value = line.substring(colonIndex + 1).trim();
+                    
+                    if (!key || !value) return;
+                    
+                    const cleanValue = value.replace(/^["']|["']$/g, '');
+                    
+                    switch (key) {
+                        case 'title':
+                            title = cleanValue;
+                            break;
+                        case 'category':
+                        case 'categories':
+                            category = cleanValue;
+                            break;
+                        case 'description':
+                        case 'excerpt':
+                            description = cleanValue;
+                            break;
+                        case 'tags':
+                            tags = cleanValue.split(',').map(tag => tag.trim());
+                            break;
+                        case 'author':
+                            author = cleanValue;
+                            break;
+                        case 'date':
+                            try {
+                                pubDate = new Date(cleanValue);
+                                if (isNaN(pubDate.getTime())) {
+                                    pubDate = new Date(year, month - 1, day);
+                                }
+                            } catch (e) {
+                                pubDate = new Date(year, month - 1, day);
+                            }
+                            break;
                     }
                 });
+                
                 bodyStartIndex = frontMatterEnd + 1;
             }
         }
 
-        // 本文の取得
+        // 本文を取得
         const bodyLines = lines.slice(bodyStartIndex);
         const fullContent = bodyLines.join('\n');
 
@@ -288,46 +491,49 @@ function parseMarkdownFile(filename, content) {
         if (!title || title === titleFromFilename) {
             const firstHeading = bodyLines.find(line => line.startsWith('#'));
             if (firstHeading) {
-                title = firstHeading.replace(/^#+\s*/, '');
+                title = firstHeading.replace(/^#+\s*/, '').trim();
             }
         }
 
         // 説明文が設定されていない場合は、本文から生成
         if (!description) {
             const textContent = fullContent
-                .replace(/^#+\s+.*/gm, '') // 見出しを除去
-                .replace(/!\[.*?\]\(.*?\)/g, '') // 画像を除去
-                .replace(/\[.*?\]\(.*?\)/g, '') // リンクを除去
-                .replace(/[*_`]/g, '') // マークダウン記号を除去
-                .replace(/\n\s*\n/g, '\n') // 空行を除去
+                .replace(/^#+\s+.*/gm, '')
+                .replace(/!\[.*?\]\(.*?\)/g, '')
+                .replace(/\[.*?\]\(.*?\)/g, '')
+                .replace(/[*_`]/g, '')
+                .replace(/\n\s*\n/g, '\n')
                 .trim();
             
             description = textContent.substring(0, 150) + (textContent.length > 150 ? '...' : '');
         }
 
-        // カテゴリを判定（フロントマターで指定されていない場合）
+        // カテゴリの自動判定
         if (category === 'information') {
             const lowerTitle = title.toLowerCase();
             const lowerContent = fullContent.toLowerCase();
             
             if (lowerTitle.includes('更新') || lowerTitle.includes('アップデート') || 
                 lowerTitle.includes('update') || lowerContent.includes('更新しました') ||
-                lowerContent.includes('アップデート')) {
+                lowerContent.includes('アップデート') || lowerTitle.includes('リリース') ||
+                lowerTitle.includes('release')) {
                 category = 'update';
             }
         }
 
-        const result = {
+        const post = {
             title: title,
             description: description,
             fullContent: convertMarkdownToHtml(fullContent),
             pubDate: pubDate,
             category: category,
+            tags: tags,
+            author: author,
             filename: filename
         };
 
-        console.log('Parsed post:', result);
-        return result;
+        console.log(`Successfully parsed: ${filename}`, post);
+        return post;
 
     } catch (error) {
         console.error(`Error parsing ${filename}:`, error);
@@ -335,7 +541,7 @@ function parseMarkdownFile(filename, content) {
     }
 }
 
-// 簡単なMarkdown to HTML変換
+// 改善されたMarkdown to HTML変換
 function convertMarkdownToHtml(markdown) {
     let html = markdown;
     
@@ -355,24 +561,27 @@ function convertMarkdownToHtml(markdown) {
     // リンク
     html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
     
-    // 画像の処理（assetsフォルダ対応）
+    // 画像（GitHub Pages対応）
     html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, function(match, alt, src) {
-        // 相対パスの画像を絶対パスに変換
         const imageSrc = convertImagePath(src);
-        return `<img src="${imageSrc}" alt="${alt}" loading="lazy">`;
+        return `<img src="${imageSrc}" alt="${alt}" loading="lazy" style="max-width: 100%; height: auto; margin: 10px 0;">`;
     });
     
-    // コードブロック（言語指定対応）
+    // コードブロック
     html = html.replace(/```(\w+)?\n([\s\S]*?)```/g, function(match, lang, code) {
         const language = lang ? ` class="language-${lang}"` : '';
-        return `<pre><code${language}>${code.trim()}</code></pre>`;
+        return `<pre style="background: #f4f4f4; padding: 15px; border-radius: 5px; overflow-x: auto; margin: 15px 0;"><code${language}>${escapeHtml(code.trim())}</code></pre>`;
     });
     
     // インラインコード
-    html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+    html = html.replace(/`([^`]+)`/g, '<code style="background: #f4f4f4; padding: 2px 4px; border-radius: 3px; font-family: monospace;">$1</code>');
     
     // 水平線
-    html = html.replace(/^---$/gm, '<hr>');
+    html = html.replace(/^---$/gm, '<hr style="margin: 20px 0; border: none; border-top: 1px solid #ddd;">');
+    
+    // リスト
+    html = html.replace(/^- (.*$)/gm, '<li>$1</li>');
+    html = html.replace(/(<li>.*<\/li>)/gs, '<ul>$1</ul>');
     
     // 改行をpタグに変換
     const paragraphs = html.split('\n\n');
@@ -387,37 +596,31 @@ function convertMarkdownToHtml(markdown) {
     return html;
 }
 
+// HTMLエスケープ関数
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
 // 画像パスを適切なURLに変換
 function convertImagePath(imagePath) {
-    // 既に絶対URLの場合はそのまま返す
     if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
         return imagePath;
     }
     
-    // assetsフォルダの画像への相対パス処理
     if (imagePath.startsWith('assets/') || imagePath.startsWith('./assets/') || imagePath.startsWith('../assets/')) {
-        // パスを正規化
         let normalizedPath = imagePath.replace(/^\.\//, '').replace(/^\.\.\//, '');
-        
-        // GitHub Pages/raw URLを構築
         const baseUrl = `https://raw.githubusercontent.com/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/${GITHUB_CONFIG.branch}`;
         return `${baseUrl}/${normalizedPath}`;
     }
     
-    // その他の相対パス（imagesフォルダなど）
     if (!imagePath.startsWith('/')) {
         const baseUrl = `https://raw.githubusercontent.com/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/${GITHUB_CONFIG.branch}`;
         return `${baseUrl}/${imagePath}`;
     }
     
-    // 絶対パス（サイトルートから）の場合
-    if (imagePath.startsWith('/')) {
-        // GitHub PagesのベースURLを使用
-        const baseUrl = `https://${GITHUB_CONFIG.owner}.github.io/${GITHUB_CONFIG.repo}`;
-        return `${baseUrl}${imagePath}`;
-    }
-    
-    return imagePath;
+    return `${GITHUB_CONFIG.baseUrl}${imagePath}`;
 }
 
 // 記事を表示する関数
@@ -455,18 +658,54 @@ function displayPosts(posts) {
                         <span class="c-entry-category__item c-entry-category__item--${categoryClass}">${categoryLabel}</span>
                     </span>
                 </span>
-                <h1 class="c-entry-list__title">${post.title}</h1>
-                <div class="c-entry-list__body">${post.description}</div>
+                <h1 class="c-entry-list__title">${escapeHtml(post.title)}</h1>
+                <div class="c-entry-list__body">${escapeHtml(post.description)}</div>
             </div>
         `;
 
-        // クリックイベントを追加
         article.addEventListener('click', () => {
             showModal(post);
         });
 
         entryList.appendChild(article);
     });
+}
+
+// 詳細エラーの表示
+function showDetailedError(error) {
+    const errorState = document.getElementById('error-state');
+    const loadingState = document.getElementById('loading-state');
+    const emptyState = document.getElementById('empty-state');
+    
+    if (loadingState) loadingState.style.display = 'none';
+    if (emptyState) emptyState.style.display = 'none';
+    
+    if (errorState) {
+        errorState.innerHTML = `
+            <h3>記事の読み込みに失敗しました</h3>
+            <p style="margin-bottom: 15px;"><strong>エラー:</strong> ${error.message}</p>
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; margin: 15px 0; text-align: left;">
+                <p><strong>考えられる原因:</strong></p>
+                <ul style="margin: 10px 0; padding-left: 20px;">
+                    <li>_progress_posts フォルダが存在しない</li>
+                    <li>Markdownファイルが存在しない</li>
+                    <li>GitHub設定が正しくない</li>
+                    <li>GitHub APIのレート制限</li>
+                    <li>ネットワーク接続の問題</li>
+                </ul>
+                <p><strong>現在の設定:</strong></p>
+                <ul style="margin: 10px 0; padding-left: 20px;">
+                    <li>Owner: ${GITHUB_CONFIG.owner}</li>
+                    <li>Repository: ${GITHUB_CONFIG.repo}</li>
+                    <li>Branch: ${GITHUB_CONFIG.branch}</li>
+                    <li>Posts Path: ${GITHUB_CONFIG.postsPath}</li>
+                </ul>
+            </div>
+            <button onclick="loadMarkdownPosts()" style="margin-right: 10px;">再試行</button>
+            <button onclick="location.reload()">ページをリロード</button>
+        `;
+        errorState.style.display = 'block';
+    }
 }
 
 // 状態管理関数
@@ -483,16 +722,6 @@ function showLoadingState() {
 function hideLoadingState() {
     const loadingState = document.getElementById('loading-state');
     if (loadingState) loadingState.style.display = 'none';
-}
-
-function showErrorState() {
-    const loadingState = document.getElementById('loading-state');
-    const errorState = document.getElementById('error-state');
-    const emptyState = document.getElementById('empty-state');
-    
-    if (loadingState) loadingState.style.display = 'none';
-    if (errorState) errorState.style.display = 'block';
-    if (emptyState) emptyState.style.display = 'none';
 }
 
 function showEmptyState() {
@@ -592,12 +821,12 @@ function showModal(post) {
     modalCategory.className = `modal-category modal-category--${categoryClass}`;
     modalCategory.textContent = categoryLabel;
     
-    // コンテンツを設定（HTMLをそのまま表示）
+    // コンテンツを設定
     modalContent.innerHTML = post.fullContent;
     
     // モーダルを表示
     modal.classList.add('show');
-    document.body.style.overflow = 'hidden'; // 背景のスクロールを無効化
+    document.body.style.overflow = 'hidden';
 }
 
 // モーダルを閉じる関数
@@ -605,9 +834,9 @@ function closeModal() {
     const modal = document.getElementById('article-modal');
     if (modal) {
         modal.classList.remove('show');
-        document.body.style.overflow = ''; // 背景のスクロールを有効化
+        document.body.style.overflow = '';
     }
 }
 
-// グローバル関数として定義（エラー時の再試行ボタン用）
+// グローバル関数として定義
 window.loadMarkdownPosts = loadMarkdownPosts;
