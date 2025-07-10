@@ -840,3 +840,90 @@ function closeModal() {
 
 // グローバル関数として定義
 window.loadMarkdownPosts = loadMarkdownPosts;
+
+// スクロールトップボタンの初期化（既存のコードに追加）
+document.addEventListener('DOMContentLoaded', function() {
+    // 既存の初期化コード...
+    initHamburgerMenu();
+    setActiveNavigation();
+    
+    // スクロールトップボタンの初期化を追加
+    initScrollToTopButton();
+});
+
+// スクロールトップボタンの初期化関数
+function initScrollToTopButton() {
+    // ボタンを動的に作成
+    const scrollTopButton = document.createElement('button');
+    scrollTopButton.className = 'scroll-to-top';
+    scrollTopButton.setAttribute('aria-label', 'ページの上部に戻る');
+    scrollTopButton.setAttribute('title', 'ページの上部に戻る');
+    
+    // ボタンをbodyに追加
+    document.body.appendChild(scrollTopButton);
+    
+    // スクロールイベントの処理
+    let ticking = false;
+    
+    function updateScrollTopButton() {
+        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+        const showThreshold = 300; // 300px スクロールしたら表示
+        
+        if (scrollTop > showThreshold) {
+            scrollTopButton.classList.add('show');
+        } else {
+            scrollTopButton.classList.remove('show');
+        }
+        
+        ticking = false;
+    }
+    
+    function requestTick() {
+        if (!ticking) {
+            requestAnimationFrame(updateScrollTopButton);
+            ticking = true;
+        }
+    }
+    
+    // スクロールイベントリスナー（パフォーマンス最適化）
+    window.addEventListener('scroll', requestTick, { passive: true });
+    
+    // クリックイベントでスムーススクロール
+    scrollTopButton.addEventListener('click', function(e) {
+        e.preventDefault();
+        smoothScrollToTop();
+    });
+}
+
+// スムーススクロール関数
+function smoothScrollToTop() {
+    const scrollDuration = 500; // アニメーション時間（ミリ秒）
+    const scrollStep = -window.scrollY / (scrollDuration / 15);
+    
+    function scrollAnimation() {
+        if (window.scrollY !== 0) {
+            window.scrollBy(0, scrollStep);
+            setTimeout(scrollAnimation, 15);
+        }
+    }
+    
+    // モダンブラウザのスムーススクロールが利用可能な場合
+    if ('scrollBehavior' in document.documentElement.style) {
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+    } else {
+        // フォールバック用のアニメーション
+        scrollAnimation();
+    }
+}
+
+// キーボードアクセシビリティの対応
+document.addEventListener('keydown', function(e) {
+    // Homeキーでページトップに移動
+    if (e.key === 'Home' && e.ctrlKey) {
+        e.preventDefault();
+        smoothScrollToTop();
+    }
+});
