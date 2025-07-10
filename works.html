@@ -124,6 +124,16 @@
             color: #c2185b;
         }
         
+        .work-tag--game {
+            background: #f3e5f5;
+            color: #7b1fa2;
+        }
+        
+        .work-tag--vr {
+            background: #e8f5e8;
+            color: #2e7d32;
+        }
+        
         /* カテゴリフィルター */
         .works-filter {
             display: flex;
@@ -149,6 +159,41 @@
         .filter-btn.active {
             background: #333;
             color: #fff;
+        }
+        
+        /* 作品メタデータ */
+        .work-meta {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .work-date {
+            font-size: 12px;
+            color: #999;
+            font-weight: 600;
+        }
+        
+        .work-category {
+            padding: 4px 10px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 600;
+            color: #fff;
+        }
+        
+        .work-category--3d {
+            background: #1976d2;
+        }
+        
+        .work-category--web {
+            background: #c2185b;
+        }
+        
+        .work-category--game {
+            background: #7b1fa2;
         }
         
         @media (max-width: 768px) {
@@ -206,7 +251,7 @@
 
 <main class="l-wrapper l-wrapper--works">
     <div class="page-content">
-        <div class="link-section">
+        <div class="progress-section">
             <h2>WORKS</h2>
             
             <!-- フィルターボタン -->
@@ -217,121 +262,52 @@
                 <button class="filter-btn" data-filter="game">Game Development</button>
             </div>
             
-            <!-- 作品グリッド -->
-            <div class="works-grid" id="works-grid">
-                <!-- 3Dモデル作品例 -->
-                <div class="work-item" data-category="3d">
-                    <div class="work-image">
-                        <span>3Dモデル画像</span>
-                    </div>
-                    <div class="work-content">
-                        <h3 class="work-title">キャラクターモデル Vol.1</h3>
-                        <p class="work-description">
-                            Blenderで制作したオリジナルキャラクターの3Dモデルです。リギング、テクスチャリングまで完了しており、VRChatやUnityで使用可能です。
-                        </p>
-                        <div class="work-tags">
-                            <span class="work-tag work-tag--3d">3D</span>
-                            <span class="work-tag work-tag--blender">Blender</span>
-                        </div>
-                    </div>
+            <!-- 作品リスト -->
+            <section class="works-grid" id="works-grid">
+                <!-- 読み込み中表示 -->
+                <div class="loading-state" id="works-loading-state">
+                    <div style="font-size: 18px; margin-bottom: 15px;">作品を読み込み中...</div>
+                    <div class="spinner"></div>
                 </div>
                 
-                <div class="work-item" data-category="3d">
-                    <div class="work-image">
-                        <span>3Dアイテム画像</span>
-                    </div>
-                    <div class="work-content">
-                        <h3 class="work-title">小物・アクセサリーセット</h3>
-                        <p class="work-description">
-                            ゲーム用の小物やアクセサリーのローポリモデルセットです。最適化されたメッシュとテクスチャで、モバイルゲームにも対応。
-                        </p>
-                        <div class="work-tags">
-                            <span class="work-tag work-tag--3d">3D</span>
-                            <span class="work-tag work-tag--blender">Blender</span>
-                            <span class="work-tag work-tag--unity">Unity</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- ウェブ開発作品例 -->
-                <div class="work-item" data-category="web">
-                    <div class="work-image">
-                        <span>ウェブサイト画像</span>
-                    </div>
-                    <div class="work-content">
-                        <h3 class="work-title">ポートフォリオサイト</h3>
-                        <p class="work-description">
-                            レスポンシブデザインに対応したポートフォリオサイト。モダンなUIとスムーズなアニメーションが特徴です。
-                        </p>
-                        <div class="work-tags">
-                            <span class="work-tag work-tag--web">Web</span>
-                            <span class="work-tag">HTML/CSS</span>
-                            <span class="work-tag">JavaScript</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="work-item" data-category="web">
-                    <div class="work-image">
-                        <span>ウェブアプリ画像</span>
-                    </div>
-                    <div class="work-content">
-                        <h3 class="work-title">ToDoアプリケーション</h3>
-                        <p class="work-description">
-                            シンプルで使いやすいToDoアプリケーション。ローカルストレージ対応で、ブラウザを閉じてもデータが保持されます。
-                        </p>
-                        <div class="work-tags">
-                            <span class="work-tag work-tag--web">Web</span>
-                            <span class="work-tag">JavaScript</span>
-                            <span class="work-tag">LocalStorage</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- ゲーム開発作品例 -->
-                <div class="work-item" data-category="game">
-                    <div class="work-image">
-                        <span>ゲーム画像</span>
-                    </div>
-                    <div class="work-content">
-                        <h3 class="work-title">2Dパズルゲーム</h3>
-                        <p class="work-description">
-                            Unityで制作したシンプルなパズルゲーム。直感的な操作とやりごたえのある難易度設定が特徴です。
-                        </p>
-                        <div class="work-tags">
-                            <span class="work-tag">Game</span>
-                            <span class="work-tag work-tag--unity">Unity</span>
-                            <span class="work-tag">C#</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="work-item" data-category="game">
-                    <div class="work-image">
-                        <span>VRコンテンツ画像</span>
-                    </div>
-                    <div class="work-content">
-                        <h3 class="work-title">VR体験コンテンツ</h3>
-                        <p class="work-description">
-                            VR空間での没入型体験コンテンツ。自然環境をテーマにしたリラクゼーション空間を提供します。
-                        </p>
-                        <div class="work-tags">
-                            <span class="work-tag">VR</span>
-                            <span class="work-tag work-tag--unity">Unity</span>
-                            <span class="work-tag work-tag--3d">3D</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
+                <!-- 作品がここに動的に追加されます -->
+            </section>
             
-            <!-- 空状態 -->
-            <div class="empty-state" id="works-empty" style="display: none;">
-                <h3>該当する作品がありません</h3>
+            <!-- 空状態（フィルタリング時に表示される可能性） -->
+            <div class="empty-state" id="works-empty-state" style="display: none;">
+                <h3>作品が見つかりません</h3>
                 <p>選択されたカテゴリには作品がありません。</p>
+            </div>
+
+            <!-- エラー状態 -->
+            <div class="error-state" id="works-error-state" style="display: none;">
+                <h3>作品の読み込みに失敗しました</h3>
+                <p style="margin-bottom: 20px;">GitHubリポジトリから作品を取得できませんでした。<br>
+                設定を確認するか、しばらく時間をおいてから再試行してください。</p>
+                <button onclick="loadWorksData()">再試行</button>
             </div>
         </div>
     </div>
 </main>
+
+<!-- 作品詳細モーダル -->
+<div class="modal-overlay" id="works-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <button class="modal-close" id="works-modal-close-btn" type="button" aria-label="閉じる">×</button>
+            <h1 class="modal-title" id="works-modal-title">作品タイトル</h1>
+            <div class="modal-meta">
+                <span class="modal-date" id="works-modal-date">2025.07.06</span>
+                <span class="modal-category" id="works-modal-category">カテゴリ</span>
+            </div>
+        </div>
+        <div class="modal-body">
+            <div class="modal-content-text" id="works-modal-content">
+                <p>作品の詳細がここに表示されます。</p>
+            </div>
+        </div>
+    </div>
+</div>
 
 <footer class="l-footer">
     <p>©2025 Portfolio Site. All rights reserved.</p>
@@ -339,46 +315,10 @@
 
 <script src="js/script.js"></script>
 <script>
-// WORKS専用のフィルタリング機能
+// ページ固有の初期化
 document.addEventListener('DOMContentLoaded', function() {
     initPage('works');
-    initWorksFilter();
 });
-
-function initWorksFilter() {
-    const filterBtns = document.querySelectorAll('.filter-btn');
-    const workItems = document.querySelectorAll('.work-item');
-    const emptyState = document.getElementById('works-empty');
-    
-    filterBtns.forEach(btn => {
-        btn.addEventListener('click', function() {
-            // アクティブ状態の切り替え
-            filterBtns.forEach(b => b.classList.remove('active'));
-            this.classList.add('active');
-            
-            const filter = this.getAttribute('data-filter');
-            let visibleCount = 0;
-            
-            workItems.forEach(item => {
-                const category = item.getAttribute('data-category');
-                
-                if (filter === 'all' || category === filter) {
-                    item.style.display = 'block';
-                    visibleCount++;
-                } else {
-                    item.style.display = 'none';
-                }
-            });
-            
-            // 空状態の表示/非表示
-            if (visibleCount === 0) {
-                emptyState.style.display = 'block';
-            } else {
-                emptyState.style.display = 'none';
-            }
-        });
-    });
-}
 </script>
 
 </body>
