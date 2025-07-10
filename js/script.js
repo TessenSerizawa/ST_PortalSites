@@ -389,7 +389,7 @@ async function fetchFileContent(url) {
     }
 }
 
-// Beautiful Jekyllスタイルのフロントマター解析
+// Beautiful Jekyllスタイルのフロントマター解析（修正版）
 function parseMarkdownFile(filename, content) {
     try {
         console.log(`Parsing file: ${filename}`);
@@ -415,11 +415,12 @@ function parseMarkdownFile(filename, content) {
 
         // デフォルト値
         let title = titleFromFilename;
-        let category = 'information';
+        let category = null; // デフォルトをnullに変更
         let description = '';
         let tags = [];
         let author = '';
         let pubDate = new Date(year, month - 1, day);
+        let categoryFromFrontMatter = false; // フロントマターでカテゴリが指定されたかを追跡
 
         // フロントマターの解析
         const lines = content.split('\n');
@@ -455,6 +456,7 @@ function parseMarkdownFile(filename, content) {
                         case 'category':
                         case 'categories':
                             category = cleanValue;
+                            categoryFromFrontMatter = true; // フロントマターで指定されたことを記録
                             break;
                         case 'description':
                         case 'excerpt':
@@ -508,8 +510,9 @@ function parseMarkdownFile(filename, content) {
             description = textContent.substring(0, 150) + (textContent.length > 150 ? '...' : '');
         }
 
-        // カテゴリの自動判定
-        if (category === 'information') {
+        // カテゴリの処理（修正版）
+        if (!categoryFromFrontMatter) {
+            // フロントマターにカテゴリが指定されていない場合、自動判定を行う
             const lowerTitle = title.toLowerCase();
             const lowerContent = fullContent.toLowerCase();
             
@@ -518,7 +521,16 @@ function parseMarkdownFile(filename, content) {
                 lowerContent.includes('アップデート') || lowerTitle.includes('リリース') ||
                 lowerTitle.includes('release')) {
                 category = 'update';
+            } else {
+                category = 'information'; // デフォルト
             }
+        }
+        // フロントマターで指定されている場合はそのまま使用
+
+        // カテゴリが有効な値でない場合のフォールバック
+        const validCategories = ['information', 'update'];
+        if (!validCategories.includes(category)) {
+            category = 'information';
         }
 
         const post = {
@@ -765,15 +777,19 @@ function initCategoryFiltering() {
     });
 }
 
-// 投稿をフィルタリングする関数
+// 投稿をフィルタリングする関数（修正版）
 function filterPosts(category) {
     currentCategory = category;
-    let filteredPosts = allPosts;
+    let filteredPosts = [];
     
-    if (category !== 'all') {
+    if (category === 'all') {
+        filteredPosts = allPosts;
+    } else {
+        // 厳密にカテゴリが一致する記事のみをフィルタリング
         filteredPosts = allPosts.filter(post => post.category === category);
     }
     
+    console.log(`フィルタリング結果: カテゴリ "${category}" で ${filteredPosts.length} 件の記事が見つかりました`);
     displayPosts(filteredPosts);
 }
 
@@ -840,90 +856,3 @@ function closeModal() {
 
 // グローバル関数として定義
 window.loadMarkdownPosts = loadMarkdownPosts;
-
-// スクロールトップボタンの初期化（既存のコードに追加）
-document.addEventListener('DOMContentLoaded', function() {
-    // 既存の初期化コード...
-    initHamburgerMenu();
-    setActiveNavigation();
-    
-    // スクロールトップボタンの初期化を追加
-    initScrollToTopButton();
-});
-
-// スクロールトップボタンの初期化関数
-function initScrollToTopButton() {
-    // ボタンを動的に作成
-    const scrollTopButton = document.createElement('button');
-    scrollTopButton.className = 'scroll-to-top';
-    scrollTopButton.setAttribute('aria-label', 'ページの上部に戻る');
-    scrollTopButton.setAttribute('title', 'ページの上部に戻る');
-    
-    // ボタンをbodyに追加
-    document.body.appendChild(scrollTopButton);
-    
-    // スクロールイベントの処理
-    let ticking = false;
-    
-    function updateScrollTopButton() {
-        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-        const showThreshold = 300; // 300px スクロールしたら表示
-        
-        if (scrollTop > showThreshold) {
-            scrollTopButton.classList.add('show');
-        } else {
-            scrollTopButton.classList.remove('show');
-        }
-        
-        ticking = false;
-    }
-    
-    function requestTick() {
-        if (!ticking) {
-            requestAnimationFrame(updateScrollTopButton);
-            ticking = true;
-        }
-    }
-    
-    // スクロールイベントリスナー（パフォーマンス最適化）
-    window.addEventListener('scroll', requestTick, { passive: true });
-    
-    // クリックイベントでスムーススクロール
-    scrollTopButton.addEventListener('click', function(e) {
-        e.preventDefault();
-        smoothScrollToTop();
-    });
-}
-
-// スムーススクロール関数
-function smoothScrollToTop() {
-    const scrollDuration = 500; // アニメーション時間（ミリ秒）
-    const scrollStep = -window.scrollY / (scrollDuration / 15);
-    
-    function scrollAnimation() {
-        if (window.scrollY !== 0) {
-            window.scrollBy(0, scrollStep);
-            setTimeout(scrollAnimation, 15);
-        }
-    }
-    
-    // モダンブラウザのスムーススクロールが利用可能な場合
-    if ('scrollBehavior' in document.documentElement.style) {
-        window.scrollTo({
-            top: 0,
-            behavior: 'smooth'
-        });
-    } else {
-        // フォールバック用のアニメーション
-        scrollAnimation();
-    }
-}
-
-// キーボードアクセシビリティの対応
-document.addEventListener('keydown', function(e) {
-    // Homeキーでページトップに移動
-    if (e.key === 'Home' && e.ctrlKey) {
-        e.preventDefault();
-        smoothScrollToTop();
-    }
-});
