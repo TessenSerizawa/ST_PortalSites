@@ -852,3 +852,55 @@ function closeModal() {
 
 // グローバル関数として定義
 window.loadMarkdownPosts = loadMarkdownPosts;
+
+// スクロールトップボタンの初期化
+function initScrollToTop() {
+    // スクロールトップボタンを作成
+    const scrollToTopBtn = document.createElement('button');
+    scrollToTopBtn.className = 'scroll-to-top';
+    scrollToTopBtn.innerHTML = '↑';
+    scrollToTopBtn.setAttribute('aria-label', 'ページトップへ戻る');
+    scrollToTopBtn.setAttribute('title', 'ページトップへ戻る');
+    
+    // bodyに追加
+    document.body.appendChild(scrollToTopBtn);
+    
+    // スクロールイベントリスナー
+    let ticking = false;
+    
+    function updateScrollButton() {
+        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+        const showThreshold = 300; // 300px以上スクロールしたら表示
+        
+        if (scrollTop > showThreshold) {
+            scrollToTopBtn.classList.add('show');
+        } else {
+            scrollToTopBtn.classList.remove('show');
+        }
+        
+        ticking = false;
+    }
+    
+    function requestTick() {
+        if (!ticking) {
+            requestAnimationFrame(updateScrollButton);
+            ticking = true;
+        }
+    }
+    
+    window.addEventListener('scroll', requestTick, { passive: true });
+    
+    // クリックイベント - スムーズスクロール
+    scrollToTopBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        
+        // スムーズスクロールでトップに戻る
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+    });
+    
+    // 初期状態を設定
+    updateScrollButton();
+}
