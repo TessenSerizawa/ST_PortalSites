@@ -129,11 +129,6 @@
             color: #7b1fa2;
         }
         
-        .work-tag--vr {
-            background: #e8f5e8;
-            color: #2e7d32;
-        }
-        
         /* カテゴリフィルター */
         .works-filter {
             display: flex;
@@ -161,39 +156,48 @@
             color: #fff;
         }
         
-        /* 作品メタデータ */
-        .work-meta {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 15px;
-            flex-wrap: wrap;
+        /* 読み込み状態のスタイル */
+        .loading-works {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
         }
         
-        .work-date {
-            font-size: 12px;
-            color: #999;
-            font-weight: 600;
+        .loading-works .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #333;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
         }
         
-        .work-category {
-            padding: 4px 10px;
-            border-radius: 10px;
-            font-size: 11px;
-            font-weight: 600;
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* エラー状態 */
+        .error-works {
+            text-align: center;
+            padding: 60px 20px;
+            color: #e74c3c;
+        }
+        
+        .error-works button {
+            padding: 10px 20px;
+            background: #333;
             color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+            margin-top: 15px;
         }
         
-        .work-category--3d {
-            background: #1976d2;
-        }
-        
-        .work-category--web {
-            background: #c2185b;
-        }
-        
-        .work-category--game {
-            background: #7b1fa2;
+        .error-works button:hover {
+            background: #555;
         }
         
         @media (max-width: 768px) {
@@ -251,7 +255,7 @@
 
 <main class="l-wrapper l-wrapper--works">
     <div class="page-content">
-        <div class="progress-section">
+        <div class="link-section">
             <h2>WORKS</h2>
             
             <!-- フィルターボタン -->
@@ -262,27 +266,27 @@
                 <button class="filter-btn" data-filter="game">Game Development</button>
             </div>
             
-            <!-- 作品リスト -->
-            <section class="works-grid" id="works-grid">
-                <!-- 読み込み中表示 -->
-                <div class="loading-state" id="works-loading-state">
-                    <div style="font-size: 18px; margin-bottom: 15px;">作品を読み込み中...</div>
-                    <div class="spinner"></div>
-                </div>
-                
-                <!-- 作品がここに動的に追加されます -->
-            </section>
+            <!-- 読み込み中表示 -->
+            <div class="loading-works" id="works-loading-state">
+                <div class="spinner"></div>
+                <div style="font-size: 18px;">作品を読み込み中...</div>
+            </div>
             
-            <!-- 空状態（フィルタリング時に表示される可能性） -->
-            <div class="empty-state" id="works-empty-state" style="display: none;">
-                <h3>作品が見つかりません</h3>
+            <!-- 作品グリッド -->
+            <div class="works-grid" id="works-grid" style="display: none;">
+                <!-- 作品がここに動的に追加されます -->
+            </div>
+            
+            <!-- 空状態 -->
+            <div class="empty-state" id="works-empty" style="display: none;">
+                <h3>該当する作品がありません</h3>
                 <p>選択されたカテゴリには作品がありません。</p>
             </div>
-
+            
             <!-- エラー状態 -->
-            <div class="error-state" id="works-error-state" style="display: none;">
+            <div class="error-works" id="works-error-state" style="display: none;">
                 <h3>作品の読み込みに失敗しました</h3>
-                <p style="margin-bottom: 20px;">GitHubリポジトリから作品を取得できませんでした。<br>
+                <p style="margin-bottom: 20px;">GitHubリポジトリから作品データを取得できませんでした。<br>
                 設定を確認するか、しばらく時間をおいてから再試行してください。</p>
                 <button onclick="loadWorksData()">再試行</button>
             </div>
@@ -298,7 +302,7 @@
             <h1 class="modal-title" id="works-modal-title">作品タイトル</h1>
             <div class="modal-meta">
                 <span class="modal-date" id="works-modal-date">2025.07.06</span>
-                <span class="modal-category" id="works-modal-category">カテゴリ</span>
+                <div id="works-modal-tags"></div>
             </div>
         </div>
         <div class="modal-body">
@@ -315,10 +319,603 @@
 
 <script src="js/script.js"></script>
 <script>
+// WORKS専用の設定
+const WORKS_CONFIG = {
+    owner: 'TessenSerizawa',
+    repo: 'ST_PortalSites',
+    branch: 'master',
+    postsPath: '_works_posts',
+    useGitHubPages: true
+};
+
+// 作品データを格納する変数
+let allWorks = [];
+let currentWorksCategory = 'all';
+let isWorksLoading = false;
+
 // ページ固有の初期化
 document.addEventListener('DOMContentLoaded', function() {
     initPage('works');
+    initWorksPage();
 });
+
+// WORKS専用の初期化
+function initWorksPage() {
+    loadWorksData();
+    initWorksFilter();
+    initWorksModal();
+}
+
+// 作品データを読み込み
+async function loadWorksData() {
+    if (isWorksLoading) return;
+    
+    isWorksLoading = true;
+    showWorksLoadingState();
+
+    try {
+        console.log('作品データを読み込み中...');
+        
+        let works = [];
+        
+        // GitHub APIで作品ファイルを取得
+        try {
+            works = await loadWorksFromGitHubAPI();
+            console.log('GitHub APIから作品を取得しました:', works.length, '件');
+        } catch (apiError) {
+            console.warn('GitHub API取得に失敗:', apiError);
+            
+            // 既知のファイルをダイレクトに取得
+            try {
+                works = await loadKnownWorksFiles();
+                console.log('既知のファイルから作品を取得しました:', works.length, '件');
+            } catch (directError) {
+                console.warn('ダイレクト取得に失敗:', directError);
+                
+                // サンプルデータを使用
+                works = getSampleWorks();
+                console.log('サンプルデータを使用します:', works.length, '件');
+            }
+        }
+
+        if (works.length === 0) {
+            throw new Error('作品が見つかりませんでした');
+        }
+
+        // 作品をソート（新しい順）
+        allWorks = works.sort((a, b) => b.pubDate - a.pubDate);
+        
+        // 作品を表示
+        displayWorks(allWorks);
+        
+    } catch (error) {
+        console.error('作品の読み込みに失敗:', error);
+        showWorksError(error);
+    } finally {
+        isWorksLoading = false;
+    }
+}
+
+// GitHub APIから作品を取得
+async function loadWorksFromGitHubAPI() {
+    const apiUrl = `https://api.github.com/repos/${WORKS_CONFIG.owner}/${WORKS_CONFIG.repo}/contents/${WORKS_CONFIG.postsPath}?ref=${WORKS_CONFIG.branch}`;
+    
+    console.log('Works GitHub API URL:', apiUrl);
+    
+    const response = await fetch(apiUrl);
+    
+    if (!response.ok) {
+        if (response.status === 404) {
+            throw new Error(`${WORKS_CONFIG.postsPath} フォルダが見つかりません (404)`);
+        } else if (response.status === 403) {
+            throw new Error(`GitHub API の制限に達しました (403)`);
+        } else {
+            throw new Error(`GitHub API エラー: ${response.status} ${response.statusText}`);
+        }
+    }
+
+    const files = await response.json();
+    
+    if (!Array.isArray(files)) {
+        throw new Error('ファイルリストの取得に失敗しました');
+    }
+
+    const markdownFiles = files.filter(file => 
+        file.type === 'file' && file.name.endsWith('.md')
+    );
+
+    if (markdownFiles.length === 0) {
+        throw new Error('Markdownファイルが見つかりません');
+    }
+
+    const works = await Promise.all(
+        markdownFiles.map(async (file) => {
+            try {
+                const content = await fetchFileContent(file.download_url);
+                return parseWorksMarkdownFile(file.name, content);
+            } catch (error) {
+                console.error(`Error loading works ${file.name}:`, error);
+                return null;
+            }
+        })
+    );
+
+    return works.filter(work => work !== null);
+}
+
+// 既知のファイルを直接取得
+async function loadKnownWorksFiles() {
+    const knownFiles = [
+        // ここに既知のファイル名を追加
+        // '2025-07-08-sample-work.md',
+    ];
+
+    if (knownFiles.length === 0) {
+        throw new Error('既知のファイルが設定されていません');
+    }
+
+    const works = await Promise.all(
+        knownFiles.map(async (filename) => {
+            try {
+                const rawUrl = `https://raw.githubusercontent.com/${WORKS_CONFIG.owner}/${WORKS_CONFIG.repo}/${WORKS_CONFIG.branch}/${WORKS_CONFIG.postsPath}/${filename}`;
+                const content = await fetchFileContent(rawUrl);
+                return parseWorksMarkdownFile(filename, content);
+            } catch (error) {
+                console.error(`Error loading works ${filename}:`, error);
+                return null;
+            }
+        })
+    );
+
+    return works.filter(work => work !== null);
+}
+
+// サンプル作品データ
+function getSampleWorks() {
+    return [
+        {
+            title: 'キャラクターモデル Vol.1',
+            description: 'Blenderで制作したオリジナルキャラクターの3Dモデルです。リギング、テクスチャリングまで完了しており、VRChatやUnityで使用可能です。',
+            fullContent: `
+                <h1>キャラクターモデル Vol.1</h1>
+                <p>Blenderで制作したオリジナルキャラクターの3Dモデルです。</p>
+                <h2>特徴</h2>
+                <ul>
+                    <li>完全リギング済み</li>
+                    <li>高品質テクスチャ</li>
+                    <li>VRChat対応</li>
+                    <li>Unity対応</li>
+                </ul>
+                <h2>技術仕様</h2>
+                <p>ポリゴン数: 約15,000<br>
+                テクスチャ解像度: 2048x2048<br>
+                ボーン数: 85</p>
+                <p><em>※ これはサンプルデータです。実際の作品を表示するには、${WORKS_CONFIG.postsPath}フォルダにMarkdownファイルを追加してください。</em></p>
+            `,
+            pubDate: new Date(2025, 6, 8),
+            category: '3d',
+            tags: ['3D', 'Blender', 'Character'],
+            image: '',
+            filename: 'sample-character.md'
+        },
+        {
+            title: 'ポートフォリオサイト',
+            description: 'レスポンシブデザインに対応したポートフォリオサイト。モダンなUIとスムーズなアニメーションが特徴です。',
+            fullContent: `
+                <h1>ポートフォリオサイト</h1>
+                <p>レスポンシブデザインに対応したポートフォリオサイトです。</p>
+                <h2>技術スタック</h2>
+                <ul>
+                    <li>HTML5</li>
+                    <li>CSS3</li>
+                    <li>JavaScript ES6+</li>
+                    <li>GitHub Pages</li>
+                </ul>
+                <h2>主な機能</h2>
+                <ul>
+                    <li>レスポンシブデザイン</li>
+                    <li>スムーズアニメーション</li>
+                    <li>モーダル表示</li>
+                    <li>カテゴリフィルタリング</li>
+                </ul>
+                <p><em>※ これはサンプルデータです。</em></p>
+            `,
+            pubDate: new Date(2025, 6, 5),
+            category: 'web',
+            tags: ['Web', 'HTML/CSS', 'JavaScript'],
+            image: '',
+            filename: 'sample-portfolio.md'
+        },
+        {
+            title: '2Dパズルゲーム',
+            description: 'Unityで制作したシンプルなパズルゲーム。直感的な操作とやりごたえのある難易度設定が特徴です。',
+            fullContent: `
+                <h1>2Dパズルゲーム</h1>
+                <p>Unityで制作したシンプルなパズルゲームです。</p>
+                <h2>ゲーム仕様</h2>
+                <ul>
+                    <li>ステージ数: 50</li>
+                    <li>プラットフォーム: PC/モバイル</li>
+                    <li>操作方法: タップ/クリック</li>
+                </ul>
+                <h2>使用技術</h2>
+                <ul>
+                    <li>Unity 2022.3 LTS</li>
+                    <li>C#</li>
+                    <li>Unity UI</li>
+                </ul>
+                <p><em>※ これはサンプルデータです。</em></p>
+            `,
+            pubDate: new Date(2025, 6, 1),
+            category: 'game',
+            tags: ['Game', 'Unity', 'C#'],
+            image: '',
+            filename: 'sample-puzzle-game.md'
+        }
+    ];
+}
+
+// 作品Markdownファイルを解析
+function parseWorksMarkdownFile(filename, content) {
+    try {
+        console.log(`Parsing works file: ${filename}`);
+        
+        // ファイル名から日付を抽出
+        const filenameParts = filename.replace('.md', '').split('-');
+        
+        let year, month, day, titleFromFilename;
+        
+        if (filenameParts.length >= 4) {
+            year = parseInt(filenameParts[0]);
+            month = parseInt(filenameParts[1]);
+            day = parseInt(filenameParts[2]);
+            titleFromFilename = filenameParts.slice(3).join('-');
+        } else {
+            const now = new Date();
+            year = now.getFullYear();
+            month = now.getMonth() + 1;
+            day = now.getDate();
+            titleFromFilename = filename.replace('.md', '');
+        }
+
+        // デフォルト値
+        let title = titleFromFilename;
+        let category = '3d';
+        let description = '';
+        let tags = [];
+        let image = '';
+        let pubDate = new Date(year, month - 1, day);
+
+        // フロントマターの解析
+        const lines = content.split('\n');
+        let frontMatterEnd = -1;
+        let bodyStartIndex = 0;
+
+        if (lines[0] === '---') {
+            for (let i = 1; i < lines.length; i++) {
+                if (lines[i] === '---') {
+                    frontMatterEnd = i;
+                    break;
+                }
+            }
+
+            if (frontMatterEnd > 0) {
+                const frontMatter = lines.slice(1, frontMatterEnd);
+                
+                frontMatter.forEach(line => {
+                    const colonIndex = line.indexOf(':');
+                    if (colonIndex === -1) return;
+                    
+                    const key = line.substring(0, colonIndex).trim();
+                    const value = line.substring(colonIndex + 1).trim();
+                    
+                    if (!key || !value) return;
+                    
+                    const cleanValue = value.replace(/^["']|["']$/g, '');
+                    
+                    switch (key) {
+                        case 'title':
+                            title = cleanValue;
+                            break;
+                        case 'category':
+                        case 'categories':
+                            category = cleanValue;
+                            break;
+                        case 'description':
+                        case 'excerpt':
+                            description = cleanValue;
+                            break;
+                        case 'tags':
+                            tags = cleanValue.split(',').map(tag => tag.trim());
+                            break;
+                        case 'image':
+                            image = cleanValue;
+                            break;
+                        case 'date':
+                            try {
+                                pubDate = new Date(cleanValue);
+                                if (isNaN(pubDate.getTime())) {
+                                    pubDate = new Date(year, month - 1, day);
+                                }
+                            } catch (e) {
+                                pubDate = new Date(year, month - 1, day);
+                            }
+                            break;
+                    }
+                });
+                
+                bodyStartIndex = frontMatterEnd + 1;
+            }
+        }
+
+        // 本文を取得
+        const bodyLines = lines.slice(bodyStartIndex);
+        const fullContent = bodyLines.join('\n');
+
+        // タイトルが設定されていない場合は、最初の見出しを使用
+        if (!title || title === titleFromFilename) {
+            const firstHeading = bodyLines.find(line => line.startsWith('#'));
+            if (firstHeading) {
+                title = firstHeading.replace(/^#+\s*/, '').trim();
+            }
+        }
+
+        // 説明文が設定されていない場合は、本文から生成
+        if (!description) {
+            const textContent = fullContent
+                .replace(/^#+\s+.*/gm, '')
+                .replace(/!\[.*?\]\(.*?\)/g, '')
+                .replace(/\[.*?\]\(.*?\)/g, '')
+                .replace(/[*_`]/g, '')
+                .replace(/\n\s*\n/g, '\n')
+                .trim();
+            
+            description = textContent.substring(0, 150) + (textContent.length > 150 ? '...' : '');
+        }
+
+        const work = {
+            title: title,
+            description: description,
+            fullContent: convertMarkdownToHtml(fullContent),
+            pubDate: pubDate,
+            category: category,
+            tags: tags,
+            image: image,
+            filename: filename
+        };
+
+        console.log(`Successfully parsed works: ${filename}`, work);
+        return work;
+
+    } catch (error) {
+        console.error(`Error parsing works ${filename}:`, error);
+        return null;
+    }
+}
+
+// 作品を表示
+function displayWorks(works) {
+    const worksGrid = document.getElementById('works-grid');
+    const loadingState = document.getElementById('works-loading-state');
+    const emptyState = document.getElementById('works-empty');
+
+    if (!worksGrid) return;
+
+    hideWorksLoadingState();
+
+    if (works.length === 0) {
+        showWorksEmptyState();
+        return;
+    }
+
+    hideWorksEmptyState();
+    worksGrid.innerHTML = '';
+    worksGrid.style.display = 'grid';
+
+    works.forEach((work, index) => {
+        const workItem = document.createElement('div');
+        workItem.className = 'work-item';
+        workItem.setAttribute('data-category', work.category);
+        workItem.setAttribute('data-work-index', index);
+
+        const categoryTags = work.tags.map(tag => {
+            const tagClass = getTagClass(tag);
+            return `<span class="work-tag ${tagClass}">${tag}</span>`;
+        }).join('');
+
+        workItem.innerHTML = `
+            <div class="work-image">
+                ${work.image ? `<img src="${work.image}" alt="${work.title}" loading="lazy">` : `<span>作品画像</span>`}
+            </div>
+            <div class="work-content">
+                <h3 class="work-title">${escapeHtml(work.title)}</h3>
+                <p class="work-description">${escapeHtml(work.description)}</p>
+                <div class="work-tags">
+                    ${categoryTags}
+                </div>
+            </div>
+        `;
+
+        workItem.addEventListener('click', () => {
+            showWorksModal(work);
+        });
+
+        worksGrid.appendChild(workItem);
+    });
+}
+
+// タグのクラスを取得
+function getTagClass(tag) {
+    const tagLower = tag.toLowerCase();
+    if (tagLower.includes('3d')) return 'work-tag--3d';
+    if (tagLower.includes('blender')) return 'work-tag--blender';
+    if (tagLower.includes('unity')) return 'work-tag--unity';
+    if (tagLower.includes('web') || tagLower.includes('html') || tagLower.includes('css') || tagLower.includes('javascript')) return 'work-tag--web';
+    if (tagLower.includes('game')) return 'work-tag--game';
+    return '';
+}
+
+// フィルタリング機能の初期化
+function initWorksFilter() {
+    const filterBtns = document.querySelectorAll('.filter-btn');
+    
+    filterBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            filterBtns.forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            
+            const filter = this.getAttribute('data-filter');
+            filterWorks(filter);
+        });
+    });
+}
+
+// 作品をフィルタリング
+function filterWorks(category) {
+    currentWorksCategory = category;
+    let filteredWorks = allWorks;
+    
+    if (category !== 'all') {
+        filteredWorks = allWorks.filter(work => work.category === category);
+    }
+    
+    displayWorks(filteredWorks);
+}
+
+// モーダル機能の初期化
+function initWorksModal() {
+    const modal = document.getElementById('works-modal');
+    const modalCloseBtn = document.getElementById('works-modal-close-btn');
+
+    if (!modal || !modalCloseBtn) return;
+
+    modalCloseBtn.addEventListener('click', closeWorksModal);
+    
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            closeWorksModal();
+        }
+    });
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && modal.classList.contains('show')) {
+            closeWorksModal();
+        }
+    });
+}
+
+// 作品モーダルを表示
+function showWorksModal(work) {
+    const modal = document.getElementById('works-modal');
+    const modalTitle = document.getElementById('works-modal-title');
+    const modalDate = document.getElementById('works-modal-date');
+    const modalTags = document.getElementById('works-modal-tags');
+    const modalContent = document.getElementById('works-modal-content');
+
+    if (!modal || !modalTitle || !modalDate || !modalTags || !modalContent) return;
+
+    modalTitle.textContent = work.title;
+    modalDate.textContent = formatDate(work.pubDate);
+    
+    // タグを設定
+    const tagsHtml = work.tags.map(tag => {
+        const tagClass = getTagClass(tag);
+        return `<span class="work-tag ${tagClass}" style="margin-right: 8px;">${tag}</span>`;
+    }).join('');
+    modalTags.innerHTML = tagsHtml;
+    
+    // コンテンツを設定
+    modalContent.innerHTML = work.fullContent;
+    
+    // モーダルを表示
+    modal.classList.add('show');
+    document.body.style.overflow = 'hidden';
+}
+
+// 作品モーダルを閉じる
+function closeWorksModal() {
+    const modal = document.getElementById('works-modal');
+    if (modal) {
+        modal.classList.remove('show');
+        document.body.style.overflow = '';
+    }
+}
+
+// 状態管理関数
+function showWorksLoadingState() {
+    const loadingState = document.getElementById('works-loading-state');
+    const errorState = document.getElementById('works-error-state');
+    const emptyState = document.getElementById('works-empty');
+    const worksGrid = document.getElementById('works-grid');
+    
+    if (loadingState) loadingState.style.display = 'block';
+    if (errorState) errorState.style.display = 'none';
+    if (emptyState) emptyState.style.display = 'none';
+    if (worksGrid) worksGrid.style.display = 'none';
+}
+
+function hideWorksLoadingState() {
+    const loadingState = document.getElementById('works-loading-state');
+    if (loadingState) loadingState.style.display = 'none';
+}
+
+function showWorksEmptyState() {
+    const loadingState = document.getElementById('works-loading-state');
+    const errorState = document.getElementById('works-error-state');
+    const emptyState = document.getElementById('works-empty');
+    const worksGrid = document.getElementById('works-grid');
+    
+    if (loadingState) loadingState.style.display = 'none';
+    if (errorState) errorState.style.display = 'none';
+    if (emptyState) emptyState.style.display = 'block';
+    if (worksGrid) worksGrid.style.display = 'none';
+}
+
+function hideWorksEmptyState() {
+    const emptyState = document.getElementById('works-empty');
+    if (emptyState) emptyState.style.display = 'none';
+}
+
+function showWorksError(error) {
+    const errorState = document.getElementById('works-error-state');
+    const loadingState = document.getElementById('works-loading-state');
+    const emptyState = document.getElementById('works-empty');
+    const worksGrid = document.getElementById('works-grid');
+    
+    if (loadingState) loadingState.style.display = 'none';
+    if (emptyState) emptyState.style.display = 'none';
+    if (worksGrid) worksGrid.style.display = 'none';
+    
+    if (errorState) {
+        errorState.innerHTML = `
+            <h3>作品の読み込みに失敗しました</h3>
+            <p style="margin-bottom: 15px;"><strong>エラー:</strong> ${error.message}</p>
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; margin: 15px 0; text-align: left;">
+                <p><strong>考えられる原因:</strong></p>
+                <ul style="margin: 10px 0; padding-left: 20px;">
+                    <li>${WORKS_CONFIG.postsPath} フォルダが存在しない</li>
+                    <li>Markdownファイルが存在しない</li>
+                    <li>GitHub設定が正しくない</li>
+                    <li>GitHub APIのレート制限</li>
+                    <li>ネットワーク接続の問題</li>
+                </ul>
+                <p><strong>現在の設定:</strong></p>
+                <ul style="margin: 10px 0; padding-left: 20px;">
+                    <li>Owner: ${WORKS_CONFIG.owner}</li>
+                    <li>Repository: ${WORKS_CONFIG.repo}</li>
+                    <li>Branch: ${WORKS_CONFIG.branch}</li>
+                    <li>Posts Path: ${WORKS_CONFIG.postsPath}</li>
+                </ul>
+            </div>
+            <button onclick="loadWorksData()" style="margin-right: 10px;">再試行</button>
+            <button onclick="location.reload()">ページをリロード</button>
+        `;
+        errorState.style.display = 'block';
+    }
+}
+
+// グローバル関数として定義
+window.loadWorksData = loadWorksData;
 </script>
 
 </body>
