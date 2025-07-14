@@ -32,9 +32,17 @@
         /* WORKS専用のスタイル */
         .works-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            grid-template-columns: repeat(3, 1fr);
             gap: 30px;
             margin-top: 30px;
+        }
+        
+        /* タブレット版 */
+        @media (max-width: 1024px) {
+            .works-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 25px;
+            }
         }
         
         .work-item {
@@ -44,6 +52,9 @@
             box-shadow: 0 8px 32px rgba(0,0,0,0.1);
             transition: all 0.3s ease;
             cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            min-height: 350px;
         }
         
         .work-item:hover {
@@ -72,6 +83,9 @@
         
         .work-content {
             padding: 25px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
         }
         
         .work-title {
@@ -87,12 +101,14 @@
             color: #666;
             line-height: 1.6;
             margin-bottom: 15px;
+            flex: 1;
         }
         
         .work-tags {
             display: flex;
             flex-wrap: wrap;
             gap: 8px;
+            margin-top: auto;
         }
         
         .work-tag {
@@ -214,6 +230,29 @@
             
             .filter-btn {
                 width: 200px;
+            }
+            
+            .work-item {
+                max-width: 100%;
+            }
+            
+            .work-content {
+                padding: 20px;
+            }
+            
+            .work-title {
+                font-size: 18px;
+            }
+        }
+        
+        /* 中間サイズのタブレット調整 */
+        @media (max-width: 900px) and (min-width: 769px) {
+            .works-grid {
+                gap: 20px;
+            }
+            
+            .work-content {
+                padding: 20px;
             }
         }
     </style>
