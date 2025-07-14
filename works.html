@@ -76,10 +76,17 @@
         }
         
         .work-image img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: -moz-crisp-edges; 
+    image-rendering: crisp-edges;
+    image-rendering: auto;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    filter: contrast(1.1) brightness(1.05);
+}
         
         .work-content {
             padding: 25px;
