@@ -712,6 +712,19 @@ function parseWorksMarkdownFile(filename, content) {
             description = textContent.substring(0, 150) + (textContent.length > 150 ? '...' : '');
         }
 
+        // 画像がフロントマターで設定されていない場合、本文から最初の画像を抽出
+        if (!image) {
+            const imageMatch = fullContent.match(/!\[.*?\]\(([^)]+)\)/);
+            if (imageMatch) {
+                image = imageMatch[1];
+            }
+        }
+
+        // 画像パスを絶対URLに変換
+        if (image) {
+            image = convertImagePath(image);
+        }
+
         const work = {
             title: title,
             description: description,
@@ -764,7 +777,11 @@ function displayWorks(works) {
 
         workItem.innerHTML = `
             <div class="work-image">
-                ${work.image ? `<img src="${work.image}" alt="${work.title}" loading="lazy">` : `<span>作品画像</span>`}
+                ${work.image ? 
+                    `<img src="${work.image}" alt="${escapeHtml(work.title)}" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                     <span style="display: none;">作品画像</span>` : 
+                    `<span>作品画像</span>`
+                }
             </div>
             <div class="work-content">
                 <h3 class="work-title">${escapeHtml(work.title)}</h3>
