@@ -517,6 +517,7 @@ function getSampleWorks() {
             description: 'Blenderで制作したオリジナルキャラクターの3Dモデルです。リギング、テクスチャリングまで完了しており、VRChatやUnityで使用可能です。',
             fullContent: `
                 <h1>キャラクターモデル Vol.1</h1>
+                <img src="assets/images/works/sample-character.jpg" alt="キャラクターモデル" style="max-width: 100%; height: auto; margin: 10px 0; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
                 <p>Blenderで制作したオリジナルキャラクターの3Dモデルです。</p>
                 <h2>特徴</h2>
                 <ul>
@@ -824,6 +825,71 @@ function initWorksFilter() {
             filterWorks(filter);
         });
     });
+}
+
+// Markdown to HTML変換（WORKS専用）
+function convertMarkdownToHtml(markdown) {
+    let html = markdown;
+    
+    // 画像（最初に処理して他の変換と競合しないようにする）
+    html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, function(match, alt, src) {
+        const imageSrc = convertImagePath(src);
+        return `<img src="${imageSrc}" alt="${alt}" loading="lazy" style="max-width: 100%; height: auto; margin: 10px 0; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">`;
+    });
+    
+    // 見出し
+    html = html.replace(/^### (.*$)/gm, '<h3>$1</h3>');
+    html = html.replace(/^## (.*$)/gm, '<h2>$1</h2>');
+    html = html.replace(/^# (.*$)/gm, '<h1>$1</h1>');
+    
+    // 太字
+    html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    html = html.replace(/__(.*?)__/g, '<strong>$1</strong>');
+    
+    // 斜体
+    html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+    html = html.replace(/_(.*?)_/g, '<em>$1</em>');
+    
+    // リンク
+    html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+    
+    // コードブロック
+    html = html.replace(/```(\w+)?\n([\s\S]*?)```/g, function(match, lang, code) {
+        const language = lang ? ` class="language-${lang}"` : '';
+        return `<pre style="background: #f4f4f4; padding: 15px; border-radius: 5px; overflow-x: auto; margin: 15px 0;"><code${language}>${escapeHtml(code.trim())}</code></pre>`;
+    });
+    
+    // インラインコード
+    html = html.replace(/`([^`]+)`/g, '<code style="background: #f4f4f4; padding: 2px 4px; border-radius: 3px; font-family: monospace;">$1</code>');
+    
+    // 水平線
+    html = html.replace(/^---$/gm, '<hr style="margin: 20px 0; border: none; border-top: 1px solid #ddd;">');
+    
+    // リスト（順序なし）
+    html = html.replace(/^- (.*$)/gm, '<li>$1</li>');
+    html = html.replace(/(<li>.*<\/li>)/gs, function(match) {
+        return '<ul>' + match + '</ul>';
+    });
+    
+    // リスト（順序あり）
+    html = html.replace(/^\d+\. (.*$)/gm, '<li>$1</li>');
+    html = html.replace(/(<li>.*<\/li>)/gs, function(match) {
+        // 既に<ul>で囲まれている場合はスキップ
+        if (match.includes('<ul>')) return match;
+        return '<ol>' + match + '</ol>';
+    });
+    
+    // 改行をpタグに変換
+    const paragraphs = html.split('\n\n');
+    html = paragraphs.map(p => {
+        p = p.trim();
+        if (p && !p.startsWith('<') && !p.includes('<img') && !p.startsWith('---')) {
+            return '<p>' + p.replace(/\n/g, '<br>') + '</p>';
+        }
+        return p;
+    }).join('\n');
+    
+    return html;
 }
 
 // 作品をフィルタリング
