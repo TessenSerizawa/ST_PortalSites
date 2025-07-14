@@ -68,6 +68,9 @@ function initPage(pageName) {
         case 'progress':
             initProgressPage();
             break;
+        case 'works':
+            initWorksPageOnly();
+            break;
         case 'link':
             initLinkPage();
             break;
@@ -90,6 +93,12 @@ function initProgressPage() {
     
     // モーダル機能の初期化
     initModal();
+}
+
+// WORKSページ専用の初期化（script.js内で定義）
+function initWorksPageOnly() {
+    // WORKSページの場合は、ページ内のスクリプトで処理される
+    console.log('WORKS page initialized from script.js');
 }
 
 // リンクページ専用の初期化
@@ -389,7 +398,7 @@ async function fetchFileContent(url) {
     }
 }
 
-// Beautiful Jekyllスタイルのフロントマター解析（修正版）
+// Beautiful Jekyllスタイルのフロントマター解析
 function parseMarkdownFile(filename, content) {
     try {
         console.log(`Parsing file: ${filename}`);
@@ -415,12 +424,11 @@ function parseMarkdownFile(filename, content) {
 
         // デフォルト値
         let title = titleFromFilename;
-        let category = null; // デフォルトをnullに変更
+        let category = 'information';
         let description = '';
         let tags = [];
         let author = '';
         let pubDate = new Date(year, month - 1, day);
-        let categoryFromFrontMatter = false; // フロントマターでカテゴリが指定されたかを追跡
 
         // フロントマターの解析
         const lines = content.split('\n');
@@ -456,7 +464,6 @@ function parseMarkdownFile(filename, content) {
                         case 'category':
                         case 'categories':
                             category = cleanValue;
-                            categoryFromFrontMatter = true; // フロントマターで指定されたことを記録
                             break;
                         case 'description':
                         case 'excerpt':
@@ -510,9 +517,8 @@ function parseMarkdownFile(filename, content) {
             description = textContent.substring(0, 150) + (textContent.length > 150 ? '...' : '');
         }
 
-        // カテゴリの処理（修正版）
-        if (!categoryFromFrontMatter) {
-            // フロントマターにカテゴリが指定されていない場合、自動判定を行う
+        // カテゴリの自動判定
+        if (category === 'information') {
             const lowerTitle = title.toLowerCase();
             const lowerContent = fullContent.toLowerCase();
             
@@ -521,16 +527,7 @@ function parseMarkdownFile(filename, content) {
                 lowerContent.includes('アップデート') || lowerTitle.includes('リリース') ||
                 lowerTitle.includes('release')) {
                 category = 'update';
-            } else {
-                category = 'information'; // デフォルト
             }
-        }
-        // フロントマターで指定されている場合はそのまま使用
-
-        // カテゴリが有効な値でない場合のフォールバック
-        const validCategories = ['information', 'update'];
-        if (!validCategories.includes(category)) {
-            category = 'information';
         }
 
         const post = {
@@ -777,19 +774,15 @@ function initCategoryFiltering() {
     });
 }
 
-// 投稿をフィルタリングする関数（修正版）
+// 投稿をフィルタリングする関数
 function filterPosts(category) {
     currentCategory = category;
-    let filteredPosts = [];
+    let filteredPosts = allPosts;
     
-    if (category === 'all') {
-        filteredPosts = allPosts;
-    } else {
-        // 厳密にカテゴリが一致する記事のみをフィルタリング
+    if (category !== 'all') {
         filteredPosts = allPosts.filter(post => post.category === category);
     }
     
-    console.log(`フィルタリング結果: カテゴリ "${category}" で ${filteredPosts.length} 件の記事が見つかりました`);
     displayPosts(filteredPosts);
 }
 
