@@ -27,6 +27,141 @@
     <meta property="twitter:title" content="Portfolio Site - LINK">
     <meta property="twitter:description" content="Connect with me on social media and explore my 3D models on BOOTH.">
     <meta property="twitter:image" content="https://yourusername.github.io/your-repository/images/og-image.jpg">
+    
+    <style>
+        /* 追加のリンクスタイル */
+        .social-links {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            justify-content: center;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        
+        .social-link {
+            display: flex;
+            align-items: center;
+            padding: 18px 25px;
+            background: linear-gradient(135deg, #333 0%, #555 100%);
+            color: #fff;
+            text-decoration: none;
+            border-radius: 50px;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            font-size: 15px;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            text-align: center;
+        }
+        
+        .social-link:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+        }
+        
+        .social-link i {
+            margin-right: 12px;
+            font-size: 18px;
+            min-width: 20px;
+        }
+        
+        /* X (Twitter) */
+        .social-link--x {
+            background: linear-gradient(135deg, #000 0%, #333 100%);
+        }
+        .social-link--x:hover {
+            background: linear-gradient(135deg, #222 0%, #444 100%);
+        }
+        
+        /* BOOTH */
+        .social-link--booth {
+            background: linear-gradient(135deg, #fc4d50 0%, #e73c3e 100%);
+        }
+        .social-link--booth:hover {
+            background: linear-gradient(135deg, #fd5a5d 0%, #f04648 100%);
+        }
+        
+        /* Pixiv */
+        .social-link--pixiv {
+            background: linear-gradient(135deg, #0096fa 0%, #0075c2 100%);
+        }
+        .social-link--pixiv:hover {
+            background: linear-gradient(135deg, #1da1ff 0%, #0086d9 100%);
+        }
+        
+        /* Bluesky */
+        .social-link--bluesky {
+            background: linear-gradient(135deg, #00a8e8 0%, #0077b3 100%);
+        }
+        .social-link--bluesky:hover {
+            background: linear-gradient(135deg, #1bb5f0 0%, #0088c7 100%);
+        }
+        
+        /* Marshmallow */
+        .social-link--marshmallow {
+            background: linear-gradient(135deg, #ff6b9d 0%, #e91e63 100%);
+        }
+        .social-link--marshmallow:hover {
+            background: linear-gradient(135deg, #ff85b3 0%, #f06292 100%);
+        }
+        
+        /* Nico3D */
+        .social-link--nico3d {
+            background: linear-gradient(135deg, #ff6600 0%, #e55a00 100%);
+        }
+        .social-link--nico3d:hover {
+            background: linear-gradient(135deg, #ff7a1a 0%, #ff6600 100%);
+        }
+        
+        /* NicoVideo */
+        .social-link--nicovideo {
+            background: linear-gradient(135deg, #ff6600 0%, #cc5200 100%);
+        }
+        .social-link--nicovideo:hover {
+            background: linear-gradient(135deg, #ff7a1a 0%, #e55a00 100%);
+        }
+        
+        /* セクション分け */
+        .link-category {
+            margin-bottom: 40px;
+        }
+        
+        .link-category h3 {
+            font-family: 'Oswald', sans-serif;
+            font-size: 24px;
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+            border-bottom: 2px solid #ddd;
+            padding-bottom: 10px;
+        }
+        
+        /* レスポンシブ調整 */
+        @media (max-width: 768px) {
+            .social-links {
+                grid-template-columns: 1fr;
+                gap: 15px;
+                padding: 0 10px;
+            }
+            
+            .social-link {
+                padding: 16px 20px;
+                font-size: 14px;
+            }
+            
+            .social-link i {
+                font-size: 16px;
+                margin-right: 10px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .social-link {
+                padding: 14px 18px;
+            }
+        }
+    </style>
 </head>
 <body id="page-link" class="l-body-fit">
 
@@ -67,20 +202,79 @@
     <div class="page-content">
         <div class="link-section">
             <h2>SOCIAL LINKS</h2>
-            <div class="social-links">
-                <a href="https://x.com/40298_PG71" class="social-link social-link--x" target="_blank" rel="noopener noreferrer">
-                    <i class="i-brand-x"></i>
-                    Follow me on X (Twitter)
-                </a>
-                <a href="https://40298pg71.booth.pm/" class="social-link social-link--booth" target="_blank" rel="noopener noreferrer">
-                    <i class="i-shop"></i>
-                    BOOTH - 3Dモデル配布
-                </a>
+            
+            <!-- SNS・ソーシャル -->
+            <div class="link-category">
+                <h3>SNS・ソーシャル</h3>
+                <div class="social-links">
+                    <a href="https://x.com/40298_PG71" class="social-link social-link--x" target="_blank" rel="noopener noreferrer">
+                        <i class="i-brand-x"></i>
+                        X (Twitter)
+                    </a>
+                    <a href="https://bsky.app/profile/40298-pg71.bsky.social" class="social-link social-link--bluesky" target="_blank" rel="noopener noreferrer">
+                        <i class="i-cloud"></i>
+                        Bluesky
+                    </a>
+                    <a href="https://marshmallow-qa.com/40298_pg71?utm_medium=url_text&utm_source=promotion" class="social-link social-link--marshmallow" target="_blank" rel="noopener noreferrer">
+                        <i class="i-mail"></i>
+                        Marshmallow (質問箱)
+                    </a>
+                </div>
             </div>
-            <div style="margin-top: 30px; text-align: center;">
+            
+            <!-- 作品・ポートフォリオ -->
+            <div class="link-category">
+                <h3>作品・ポートフォリオ</h3>
+                <div class="social-links">
+                    <a href="https://www.pixiv.net/users/85485030" class="social-link social-link--pixiv" target="_blank" rel="noopener noreferrer">
+                        <i class="i-image"></i>
+                        Pixiv
+                    </a>
+                    <a href="https://40298pg71.booth.pm/" class="social-link social-link--booth" target="_blank" rel="noopener noreferrer">
+                        <i class="i-shop"></i>
+                        BOOTH - 3Dモデル配布
+                    </a>
+                </div>
+            </div>
+            
+            <!-- ニコニコ動画関連 -->
+            <div class="link-category">
+                <h3>ニコニコ動画関連</h3>
+                <div class="social-links">
+                    <a href="http://3d.nicovideo.jp/users/122127641" class="social-link social-link--nico3d" target="_blank" rel="noopener noreferrer">
+                        <i class="i-cube"></i>
+                        ニコニ立体
+                    </a>
+                    <a href="https://www.nicovideo.jp/user/122127641" class="social-link social-link--nicovideo" target="_blank" rel="noopener noreferrer">
+                        <i class="i-play"></i>
+                        ニコニコ動画
+                    </a>
+                </div>
+            </div>
+            
+            <!-- 説明文 -->
+            <div style="margin-top: 40px; text-align: center;">
+                <div style="background: #f9f9f9; padding: 25px; border-radius: 12px; margin-bottom: 20px;">
+                    <h4 style="font-family: 'Oswald', sans-serif; font-size: 20px; color: #333; margin-bottom: 15px;">各プラットフォームについて</h4>
+                    <div style="text-align: left; max-width: 600px; margin: 0 auto;">
+                        <p style="font-size: 14px; color: #666; line-height: 1.6; margin-bottom: 12px;">
+                            <strong>BOOTH:</strong> 制作した3Dモデルを配布しています
+                        </p>
+                        <p style="font-size: 14px; color: #666; line-height: 1.6; margin-bottom: 12px;">
+                            <strong>Pixiv:</strong> イラストや3D作品を投稿しています
+                        </p>
+                        <p style="font-size: 14px; color: #666; line-height: 1.6; margin-bottom: 12px;">
+                            <strong>ニコニ立体:</strong> 3Dモデルの展示・配布を行っています
+                        </p>
+                        <p style="font-size: 14px; color: #666; line-height: 1.6; margin-bottom: 12px;">
+                            <strong>Marshmallow:</strong> 匿名で質問や感想をお送りいただけます
+                        </p>
+                    </div>
+                </div>
+                
                 <p style="font-size: 16px; color: #666; line-height: 1.6;">
-                    <strong>BOOTH</strong><br>
-                    制作した3Dモデルを配布しています
+                    各プラットフォームで活動しています。<br>
+                    お気軽にフォローや質問をお寄せください。
                 </p>
             </div>
         </div>
