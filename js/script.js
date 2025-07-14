@@ -6,6 +6,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 現在のページに基づいてナビゲーションをアクティブに設定
     setActiveNavigation();
+    
+    // スクロールトップボタンの初期化
+    initScrollToTop();
 });
 
 // ハンバーガーメニューの初期化
