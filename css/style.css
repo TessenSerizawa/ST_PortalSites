@@ -4,15 +4,34 @@
     box-sizing: border-box;
 }
 
-/* ダークモード用CSS変数 */
+/* ライトモードとダークモードのCSS変数定義 */
 :root {
+    /* ライトモードの色 */
+    --bg-primary: #ffffff;
+    --bg-secondary: #f5f5f5;
+    --bg-tertiary: #e8e8e8;
+    --bg-card: #ffffff;
+    --text-primary: #333333;
+    --text-secondary: #666666;
+    --text-muted: #999999;
+    --border-color: #e0e0e0;
+    --shadow-color: rgba(0, 0, 0, 0.1);
+    --accent-color: #4CAF50;
+    --accent-hover: #66BB6A;
+    --link-color: #1976D2;
+    --header-bg: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 50%, #dddddd 100%);
+    --card-hover-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+}
+
+/* ダークモード */
+[data-theme="dark"] {
     --bg-primary: #0a0a0a;
     --bg-secondary: #151515;
     --bg-tertiary: #1e1e1e;
     --bg-card: #1a1a1a;
     --text-primary: #e8e8e8;
     --text-secondary: #b8b8b8;
-    --text-muted: #888;
+    --text-muted: #888888;
     --border-color: #2a2a2a;
     --shadow-color: rgba(0, 0, 0, 0.7);
     --accent-color: #4CAF50;
@@ -27,6 +46,55 @@ body {
     background-color: var(--bg-primary);
     color: var(--text-primary);
     transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* テーマ切り替えボタン */
+.theme-toggle {
+    position: fixed;
+    top: 25px;
+    right: 80px;
+    z-index: 9999;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: var(--bg-card);
+    border: 2px solid var(--border-color);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px var(--shadow-color);
+}
+
+.theme-toggle:hover {
+    transform: scale(1.1);
+    border-color: var(--accent-color);
+    box-shadow: 0 6px 20px var(--shadow-color);
+}
+
+.theme-toggle svg {
+    width: 24px;
+    height: 24px;
+    fill: var(--text-primary);
+    transition: all 0.3s ease;
+}
+
+/* 太陽と月のアイコンの表示切り替え */
+.theme-toggle .sun-icon {
+    display: none;
+}
+
+.theme-toggle .moon-icon {
+    display: block;
+}
+
+[data-theme="dark"] .theme-toggle .sun-icon {
+    display: block;
+}
+
+[data-theme="dark"] .theme-toggle .moon-icon {
+    display: none;
 }
 
 /* ヘッダー */
@@ -55,13 +123,13 @@ body {
     text-decoration: none;
     font-family: 'Oswald', sans-serif;
     letter-spacing: 2px;
-    text-shadow: 2px 2px 8px rgba(0,0,0,0.9);
+    text-shadow: 2px 2px 8px var(--shadow-color);
     transition: all 0.3s ease;
 }
 
 .l-header__logo a:hover {
-    color: #fff;
-    text-shadow: 0 0 20px rgba(255,255,255,0.5);
+    color: var(--accent-color);
+    text-shadow: 0 0 20px var(--shadow-color);
 }
 
 /* メインメニュー */
@@ -93,7 +161,7 @@ body {
     position: relative;
     overflow: hidden;
     transition: all 0.4s ease;
-    background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.02) 100%);
+    background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
     border: 2px solid var(--border-color);
     clip-path: polygon(15px 0, 100% 0, calc(100% - 15px) 100%, 0 100%);
     text-transform: uppercase;
@@ -106,7 +174,8 @@ body {
     left: 0;
     width: 0;
     height: 100%;
-    background: rgba(255,255,255,0.08);
+    background: var(--accent-color);
+    opacity: 0.1;
     transition: width 0.3s ease;
     z-index: 1;
 }
@@ -118,15 +187,15 @@ body {
     left: 50%;
     width: 0;
     height: 2px;
-    background: linear-gradient(90deg, transparent, var(--text-primary), transparent);
+    background: linear-gradient(90deg, transparent, var(--accent-color), transparent);
     transition: all 0.4s ease;
     transform: translateX(-50%);
 }
 
 .c-mainmenu__link:hover {
     color: var(--text-primary);
-    background: linear-gradient(135deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.06) 100%);
-    border-color: rgba(255,255,255,0.3);
+    background: linear-gradient(135deg, var(--bg-tertiary) 0%, var(--bg-secondary) 100%);
+    border-color: var(--accent-color);
     transform: translateY(-3px);
     box-shadow: 0 8px 25px var(--shadow-color);
 }
@@ -141,16 +210,16 @@ body {
 
 /* アクティブ状態 */
 .c-mainmenu__link.active {
-    color: #fff;
-    background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.08) 100%);
-    border-color: rgba(255,255,255,0.4);
-    box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+    color: var(--text-primary);
+    background: linear-gradient(135deg, var(--accent-color) 0%, var(--accent-hover) 100%);
+    border-color: var(--accent-color);
+    box-shadow: 0 5px 15px var(--shadow-color);
     transform: translateY(-2px);
 }
 
 .c-mainmenu__link.active::after {
     width: 80%;
-    background: linear-gradient(90deg, transparent, #fff, transparent);
+    background: linear-gradient(90deg, transparent, var(--text-primary), transparent);
 }
 
 /* ハンバーガーメニュー */
@@ -174,7 +243,7 @@ body {
 
 .p-hamburger:hover {
     background: var(--bg-tertiary);
-    border-color: var(--text-muted);
+    border-color: var(--accent-color);
 }
 
 .p-hamburger__line {
@@ -200,11 +269,20 @@ body {
         padding: 15px 25px;
         font-size: 15px;
     }
+
+    .theme-toggle {
+        right: 70px;
+    }
 }
 
 @media (max-width: 768px) {
     .p-hamburger {
         display: flex;
+    }
+
+    .theme-toggle {
+        top: 20px;
+        right: 80px;
     }
 
     .l-header__logo {
@@ -334,9 +412,9 @@ body {
 
 .social-link:hover {
     transform: translateY(-3px);
-    box-shadow: 0 8px 25px rgba(255, 255, 255, 0.1);
-    background: linear-gradient(135deg, #2a2a2a 0%, #1e1e1e 100%);
-    border-color: var(--text-muted);
+    box-shadow: var(--card-hover-shadow);
+    background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+    border-color: var(--accent-color);
 }
 
 .social-link i {
@@ -348,6 +426,7 @@ body {
 .social-link--x {
     background: linear-gradient(135deg, #000 0%, #1a1a1a 100%);
     border-color: #333;
+    color: #fff;
 }
 
 .social-link--x:hover {
@@ -359,6 +438,7 @@ body {
 .social-link--booth {
     background: linear-gradient(135deg, #fc4d50 0%, #e73c3e 100%);
     border-color: #d32f2f;
+    color: #fff;
 }
 
 .social-link--booth:hover {
@@ -434,9 +514,9 @@ body {
 }
 
 .c-entry-list__item:hover {
-    box-shadow: 0 4px 15px rgba(255, 255, 255, 0.05);
+    box-shadow: var(--card-hover-shadow);
     transform: translateY(-2px);
-    border-color: var(--text-muted);
+    border-color: var(--accent-color);
 }
 
 .c-entry-list__link {
@@ -568,7 +648,7 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.9);
+    background: rgba(0, 0, 0, 0.8);
     display: none;
     justify-content: center;
     align-items: center;
@@ -736,15 +816,16 @@ body {
 }
 
 .modal-content-text code {
-    background: var(--bg-tertiary) !important;
-    color: var(--text-primary) !important;
-    padding: 2px 4px;
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    padding: 2px 6px;
     border-radius: 3px;
-    font-family: monospace;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9em;
 }
 
 .modal-content-text pre {
-    background: var(--bg-tertiary) !important;
+    background: var(--bg-tertiary);
     padding: 15px;
     border-radius: 5px;
     overflow-x: auto;
@@ -753,8 +834,8 @@ body {
 }
 
 .modal-content-text pre code {
-    background: transparent !important;
-    padding: 0 !important;
+    background: transparent;
+    padding: 0;
 }
 
 /* アニメーション */
@@ -798,8 +879,8 @@ body {
 
 .work-item:hover {
     transform: translateY(-5px);
-    box-shadow: 0 15px 40px rgba(255, 255, 255, 0.08);
-    border-color: var(--text-muted);
+    box-shadow: var(--card-hover-shadow);
+    border-color: var(--accent-color);
 }
 
 .work-image {
@@ -908,25 +989,6 @@ body {
     border-color: var(--accent-hover);
 }
 
-/* INTRODUCTIONページ専用スタイル */
-.link-section div[style*="background: #f9f9f9"] {
-    background: var(--bg-secondary) !important;
-    border: 1px solid var(--border-color);
-}
-
-.link-section div[style*="background: #fff"] {
-    background: var(--bg-card) !important;
-    border: 1px solid var(--border-color);
-}
-
-.link-section div[style*="background: #333"] {
-    background: var(--bg-tertiary) !important;
-}
-
-.link-section div[style*="background: #f0f0f0"] {
-    background: var(--bg-tertiary) !important;
-}
-
 /* モバイル対応 */
 @media (max-width: 768px) {
     .modal-content {
@@ -998,7 +1060,7 @@ body {
     border-top: 1px solid var(--border-color);
 }
 
-/* スクロールバーのダークモード対応 */
+/* スクロールバーのスタイリング */
 ::-webkit-scrollbar {
     width: 12px;
     height: 12px;
